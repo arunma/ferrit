@@ -1,19 +1,15 @@
 package org.ferrit.core.http
 
-import scala.concurrent.Future
-import com.ning.http.client.{AsyncHttpClient, AsyncHandler}
-import com.ning.http.client.AsyncCompletionHandler
 import com.ning.http.client.AsyncHandler._
+import com.ning.http.client.{AsyncHandler, AsyncHttpClient, Response => NingResponse, _}
 import org.ferrit.core.http.{Response => OurResponse}
-import com.ning.http.client.{Response => NingResponse}
-import com.ning.http.client._
-import scala.concurrent.Promise
-import java.net.URI
-import java.util.concurrent.{Future => JFuture}
-import java.util.concurrent.Executor
-import java.io.ByteArrayOutputStream
-import java.util.{Map => JMap, List => JList, Set => JSet}
+
 import scala.collection.JavaConverters._
+import scala.concurrent.{Future, Promise}
+
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.{Future => JFuture}
+import java.util.{List => JList, Map => JMap, Set => JSet}
 
 /**
  * HttpClient implementation that uses the Ning AsyncHttpClient.
@@ -28,6 +24,10 @@ class NingAsyncHttpClient(config: HttpClientConfig) extends HttpClient {
       .setCompressionEnabled(config.useCompression)
       .build()
     new AsyncHttpClient(conf)
+  }
+
+  def this() {
+    this(new HttpClientConfig)
   }
 
   override def shutdown(): Unit = client.close()

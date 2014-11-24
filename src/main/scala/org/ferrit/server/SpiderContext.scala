@@ -3,11 +3,11 @@ package org.ferrit.server
 
 import akka.actor._
 import com.typesafe.config._
-import org.ferrit.core.crawler.{SpiderManager, CrawlLog}
-import org.ferrit.core.http.{HttpClientConfig, NingAsyncHttpClient, HttpClient}
+import org.ferrit.core.crawler.{CrawlLog, SpiderManager}
+import org.ferrit.core.http.{HttpClient, NingAsyncHttpClient}
 import org.ferrit.core.robot.{DefaultRobotRulesCache, RobotRulesCacheActor}
-import org.ferrit.dao.{DAOFactory, Journal}
 import org.ferrit.dao.cassandra.CassandraDAOFactory
+import org.ferrit.dao.{DAOFactory, Journal}
 
 trait SpiderContext {
   def config: Config
@@ -41,7 +41,7 @@ class ProdSpiderContext(implicit val system: ActorSystem) extends SpiderContext 
 
   override lazy val journal = system.actorOf(Props(classOf[Journal], daoFactory))
 
-  override lazy val spiderClient = new NingAsyncHttpClient(new HttpClientConfig())
+  override lazy val spiderClient = new NingAsyncHttpClient
 
 }
 

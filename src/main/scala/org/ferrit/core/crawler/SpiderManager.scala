@@ -31,7 +31,7 @@ class SpiderManager(
   ) extends Actor {
   
   
-  import org.ferrit.core.crawler.SpiderManager._
+  import SpiderManager._
 
   private [crawler] implicit val execContext = context.system.dispatcher
   private [crawler] val log = Logging(context.system, getClass)
