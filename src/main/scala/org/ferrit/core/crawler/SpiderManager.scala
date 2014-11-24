@@ -1,29 +1,26 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Actor, ActorRef, Props, Terminated}
-import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy.Stop
-import akka.pattern.ask
-import akka.pattern.pipe
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, Terminated}
 import akka.event.Logging
+import akka.pattern.{ask, pipe}
 import akka.routing.Listen
 import akka.util.Timeout
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import org.ferrit.core.crawler.CrawlWorker.{Run, Started, StartOkay, StartFailed}
-import org.ferrit.core.crawler.CrawlWorker.{StopCrawl, Stopped}
-import org.ferrit.core.http.HttpClient
+import com.typesafe.config.Config
+import org.ferrit.core.crawler.CrawlWorker.{Run, StartFailed, StartOkay, StopCrawl}
+import org.ferrit.core.http.{NingAsyncHttpClient, HttpClient}
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.parser.MultiParser
-import org.ferrit.core.robot.{DefaultRobotRulesCache, RobotRulesCacheActor}
-import org.ferrit.core.uri.InMemoryFrontier
-import org.ferrit.core.uri.InMemoryUriCache
+import org.ferrit.core.uri.{InMemoryFrontier, InMemoryUriCache}
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
 
 
 /**
  * Manages a collection of running crawler jobs up to a given limit.
  */
-class CrawlerManager(
+class SpiderManager(
   
   node: String,
   userAgent: String,
@@ -34,7 +31,7 @@ class CrawlerManager(
   ) extends Actor {
   
   
-  import CrawlerManager._
+  import org.ferrit.core.crawler.SpiderManager._
 
   private [crawler] implicit val execContext = context.system.dispatcher
   private [crawler] val log = Logging(context.system, getClass)
@@ -138,8 +135,17 @@ class CrawlerManager(
 
 }
 
-object CrawlerManager {
-  
+object SpiderManager {
+  def props(config: Config, spiderClient: NingAsyncHttpClient, robotsRuleCache: ActorRef): Props = {
+    Props(classOf[SpiderManager],
+      config.getString("app.server.host"),
+      config.getString("app.crawler.user-agent"),
+      config.getString("app.crawler.max-crawlers"),
+      spiderClient,
+      robotsRuleCache)
+  }
+
+
   case class StartJob(config: CrawlConfig, crawlListeners: Seq[ActorRef])
   case class JobStartFailed(t: Throwable)
 

@@ -1,8 +1,8 @@
 package org.ferrit.dao.cassandra
 
 import com.datastax.driver.core.Session
+import com.typesafe.config.Config
 import org.ferrit.dao.DAOFactory
-import org.ferrit.dao.cassandra._
 
 
 class CassandraDAOFactory(ttl: CassandraColumnTTL, session: Session) extends DAOFactory {
@@ -21,4 +21,11 @@ class CassandraDAOFactory(ttl: CassandraColumnTTL, session: Session) extends DAO
   override val documentMetaDataDao = new CassandraDocumentMetaDataDAO(ttl)
   override val documentDao = new CassandraDocumentDAO(ttl)
 
+  def this(cc: CassandraPersistenceManager, config: Config) {
+    this(cc.getColumnTTL(config), cc.session)
+  }
+
+  def this(config: Config) {
+    this(new CassandraPersistenceManager(config), config)
+  }
 }

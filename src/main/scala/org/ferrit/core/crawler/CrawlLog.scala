@@ -1,14 +1,13 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Actor, Terminated}
+import akka.actor.{Props, Actor, Terminated}
 import akka.event.Logging
-import org.joda.time.{DateTime, Duration}
-import org.ferrit.core.crawler.FetchMessages._
+import com.typesafe.config.Config
 import org.ferrit.core.crawler.CrawlWorker._
+import org.ferrit.core.crawler.FetchMessages._
 import org.ferrit.core.model.CrawlJob
-import org.ferrit.core.parser.ParserResult
-import org.ferrit.core.uri.FetchJob
 import org.ferrit.core.util.TextFormatter._
+import org.joda.time.{DateTime, Duration}
 
 /**
  * Register this with CrawlWorker to be notified of crawl events.
@@ -177,5 +176,10 @@ class CrawlLog extends Actor {
 
     lines.flatten
   }
+
+}
+
+object CrawlLog {
+  def props(config: Config): Props = Props(classOf[CrawlLog])
 
 }

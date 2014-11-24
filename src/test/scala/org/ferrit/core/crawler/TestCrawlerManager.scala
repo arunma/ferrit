@@ -24,7 +24,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
   
   behavior of "CrawlerManager"
 
-  import CrawlerManager._
+  import SpiderManager._
 
   implicit val system = ActorSystem("test")
   implicit val execContext = system.dispatcher
@@ -49,7 +49,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     def makeManager(maxCrawlers: Int, httpClient: HttpClient):ActorRef = 
       system.actorOf(Props(
-        classOf[CrawlerManager],
+        classOf[SpiderManager],
         node,
         userAgent,
         maxCrawlers, 
@@ -92,7 +92,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     manager ! StartJob(config, NoLogger)
     fishForMessage(1.second) { 
-      case JobStartFailed(CrawlRejectException(CrawlerManager.crawlerExists)) => true 
+      case JobStartFailed(CrawlRejectException(SpiderManager.crawlerExists)) => true
     }
   }
 
@@ -112,7 +112,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     manager ! StartJob(config2, NoLogger)
     fishForMessage(1.second) { 
-      case JobStartFailed(CrawlRejectException(CrawlerManager.tooManyCrawlers)) => true 
+      case JobStartFailed(CrawlRejectException(SpiderManager.tooManyCrawlers)) => true
     }
 
   }
@@ -327,7 +327,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
     // Creates single manager for all crawlers
 
     val manager = system.actorOf(Props(
-      classOf[CrawlerManager], 
+      classOf[SpiderManager],
       node,
       userAgent,
       maxCrawlers, 

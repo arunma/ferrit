@@ -1,7 +1,6 @@
 package org.ferrit.server.json
 
 import play.api.libs.json.Json
-import org.ferrit.core.json.PlayJsonImplicits.crawlConfigReads
 
 
 object PlayJsonImplicits {

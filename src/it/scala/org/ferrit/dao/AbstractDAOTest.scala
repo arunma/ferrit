@@ -1,11 +1,10 @@
 package org.ferrit.dao
 
-import scala.util.Random
-import org.scalatest.{FlatSpec, BeforeAndAfterAll}
 import com.datastax.driver.core.{Cluster, Session}
-import com.datastax.driver.core.policies.Policies
-import org.ferrit.dao.cassandra.{CassandraPersistenceManager, CassandraTables}
-import org.ferrit.dao.cassandra.{CassandraConfig, CassandraColumnTTL}
+import org.ferrit.dao.cassandra._
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+
+import scala.util.Random
 
 object TestDB {
   val config = CassandraConfig("ferrit", Seq("127.0.0.1"), 9242)
@@ -26,7 +25,7 @@ abstract class AbstractDAOTest(
     )
   
 
-  val daoFactory: DAOFactory = new DAOFactory(ttl, session)
+  val daoFactory: DAOFactory = new CassandraDAOFactory(ttl, session)
 
   override def beforeAll():Unit = {}
 

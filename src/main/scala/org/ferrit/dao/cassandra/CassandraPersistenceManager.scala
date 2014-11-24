@@ -1,16 +1,19 @@
 package org.ferrit.dao.cassandra
 
-import com.typesafe.config.Config
-import com.datastax.driver.core.{Cluster, Session}
 import com.datastax.driver.core.policies.Policies
-import org.ferrit.core.model._
+import com.datastax.driver.core.{Cluster, Session}
+import com.typesafe.config.Config
 
 
 class CassandraPersistenceManager(config: CassandraConfig) {
   
   val cluster: Cluster = CassandraPersistenceManager.initCluster(config)
   val session: Session = cluster.connect(config.keyspace)
-  
+
+  def this(config: Config) {
+    this(new CassandraConfig(config))
+  }
+
   def shutdown():Unit = {
     cluster.shutdown()
   }
@@ -62,4 +65,11 @@ case class CassandraConfig(
   keyspace: String, 
   nodes: Seq[String],
   port: Int
-)
+) {
+  def this(config: Config) {
+    this(config.getString("persistence.cassandra.keyspace"),
+      Seq(config.getString("persistence.cassandra.node")),
+      config.getInt("persistence.cassandra.port")
+    )
+  }
+}
