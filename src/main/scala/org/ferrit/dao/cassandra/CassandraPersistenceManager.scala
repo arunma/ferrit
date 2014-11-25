@@ -20,8 +20,8 @@ class CassandraPersistenceManager(config: CassandraConfig) {
 
   def getColumnTTL(config: Config):CassandraColumnTTL =   
     CassandraColumnTTL(
-      CassandraTables.AllTables.map({t => 
-        (t -> config.getInt(s"persistence.cassandra.tableColumnTTL.$t"))
+      CassandraTables.AllTables.map({t =>
+        t -> config.getInt(s"persistence.cassandra.tableColumnTTL.$t")
       }).toMap
     )
   

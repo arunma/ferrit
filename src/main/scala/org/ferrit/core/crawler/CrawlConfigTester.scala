@@ -64,15 +64,15 @@ object CrawlConfigTester {
       Result(uri, passed, message)
     }
 
-    val seedResults = config.seeds.map(testUri(_, true))
+    val seedResults = config.seeds.map(testUri(_, shouldAccept = true))
     
     val testResults = config.tests match {
       case None => Nil
       case Some(tests) =>
         KeyValueParser.parse(testDirectives, tests, 
         {(key:String, value:String) => key match {
-            case "should accept" => testUri(CrawlUri(value), true)
-            case "should reject" => testUri(CrawlUri(value), false)
+          case "should accept" => testUri(CrawlUri(value), shouldAccept = true)
+          case "should reject" => testUri(CrawlUri(value), shouldAccept = false)
           }
         }
       )

@@ -16,6 +16,7 @@ import spray.httpx.PlayJsonSupport._
 import spray.routing.{Directive1, _}
 import spray.util.LoggingContext
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
 object Ferrit extends App with SimpleRoutingApp {
@@ -23,11 +24,6 @@ object Ferrit extends App with SimpleRoutingApp {
   implicit val system = ActorSystem("ferrit-spider")
 
   implicit val customRejectionHandler = CustomRejectionHandler.customRejectionHandler
-
-  implicit def customExceptionHandler(implicit log: LoggingContext) = CustomExceptionHandler.handler(log)
-
-  implicit def executionContext = actorRefFactory.dispatcher
-
   val spiderContext = new ProdSpiderContext
   val config = spiderContext.config
   val spiderManager = spiderContext.spiderManager
@@ -36,13 +32,6 @@ object Ferrit extends App with SimpleRoutingApp {
   val crawlerDao = daoFactory.crawlerDao
   val askTimeout = new Timeout(3.seconds)
   val startJobTimeout = new Timeout(30.seconds)
-
-  startServer(
-    interface = config.getString("app.server.host"),
-    port = config.getInt("app.server.port")) {
-    routes
-  }
-
   val routes =
     path("crawlers" / Segment / "jobs" / Segment / "fetches") { (crawlerId, jobId) =>
       get {
@@ -174,6 +163,22 @@ object Ferrit extends App with SimpleRoutingApp {
           }
         }
       }
+  val DateParamDefault = "no-date"
+
+  startServer(
+    interface = config.getString("app.server.host"),
+    port = config.getInt("app.server.port")) {
+    routes
+  }
+  val DateParamFormat = "YYYY-MM-dd"
+  val NoPostToNamedCrawlerMsg = "Cannot post to an existing crawler resource"
+  val StopJobAcceptedMsg = "Stop request accepted for job [%s]"
+  val StopAllJobsAcceptedMsg = "Stop request accepted for %s jobs"
+  val ShutdownReceivedMsg = "Shutdown request received"
+
+  implicit def customExceptionHandler(implicit log: LoggingContext): ExceptionHandler = CustomExceptionHandler.handler(log)
+
+  implicit def executionContext: ExecutionContextExecutor = actorRefFactory.dispatcher
 
   def withCrawler(crawlerId: String): Directive1[Crawler] = {
     crawlerDao.find(crawlerId) match {
@@ -188,12 +193,5 @@ object Ferrit extends App with SimpleRoutingApp {
       case Some(crawlJob) => provide(crawlJob)
     }
   }
-
-  val DateParamDefault = "no-date"
-  val DateParamFormat = "YYYY-MM-dd"
-  val NoPostToNamedCrawlerMsg = "Cannot post to an existing crawler resource"
-  val StopJobAcceptedMsg = "Stop request accepted for job [%s]"
-  val StopAllJobsAcceptedMsg = "Stop request accepted for %s jobs"
-  val ShutdownReceivedMsg = "Shutdown request received"
 }
 

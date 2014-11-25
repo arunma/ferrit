@@ -12,7 +12,7 @@ class MultiParser(parsers: Seq[ContentParser]) extends ContentParser {
   override def canParse(response: Response):Boolean = 
     parserFor(response).nonEmpty
 
-  override def parse(response: Response):ParserResult =
+  override def parse(response: Response): ParserResult =
     parserFor(response) match {
       case Some(parser) => parser.parse(response)
       case None => throw new ParseException(s"No parser for response")
@@ -29,10 +29,7 @@ class MultiParser(parsers: Seq[ContentParser]) extends ContentParser {
 object MultiParser {
   
   def default: MultiParser = new MultiParser(
-    Seq(
-      new HtmlParserJsoup, 
-      new CssParserRegex
-    )
+    Seq(HtmlParserJsoup)
   )
 
 }

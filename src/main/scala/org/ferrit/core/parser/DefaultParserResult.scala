@@ -7,5 +7,5 @@ case class DefaultParserResult(
   override val duration: Long) extends ParserResult
 
 object DefaultParserResult {
-  def empty:ParserResult = DefaultParserResult(Set.empty, false, false, 0)
+  def empty: ParserResult = DefaultParserResult(Set.empty, indexingDisallowed = false, followingDisallowed = false, 0)
 }

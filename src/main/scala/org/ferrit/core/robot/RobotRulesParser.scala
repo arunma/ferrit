@@ -1,7 +1,7 @@
 package org.ferrit.core.robot
 
-import scala.util.matching.Regex
 import scala.collection.mutable.ListBuffer
+import scala.util.matching.Regex
 
 /**
  * Parses the directives in a robots.txt file applying to the given 
@@ -41,8 +41,8 @@ import scala.collection.mutable.ListBuffer
 *          (crawlercommons.robots.SimpleRobotRulesParser)
  */
 class RobotRulesParser {
-  
-  import RobotRulesParser._
+
+  import org.ferrit.core.robot.RobotRulesParser._
 
   /**
    * @param userAgent - this parameter is used to select the correct
@@ -112,7 +112,7 @@ object RobotRulesParser {
   def parseLine(text: String):Option[(String,String)] = 
     for {
       LineParser(key, value) <- LineParser.findFirstIn(text)
-    } yield ((key,value))
+    } yield (key, value)
 
   def clean(line: String):String =
     line

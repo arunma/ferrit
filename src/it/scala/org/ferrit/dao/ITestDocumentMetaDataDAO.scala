@@ -1,10 +1,8 @@
 package org.ferrit.dao
 
+import org.ferrit.core.model.DocumentMetaData
 import org.joda.time.DateTime
 import org.scalatest.matchers.ShouldMatchers
-import com.datastax.driver.core.{Cluster, Session, PreparedStatement}
-import com.datastax.driver.core.{BoundStatement, ResultSet, Row}
-import org.ferrit.core.model.DocumentMetaData
 
 
 class ITestDocumentMetaDataDAO extends AbstractDAOTest with ShouldMatchers {
@@ -61,7 +59,7 @@ class ITestDocumentMetaDataDAO extends AbstractDAOTest with ShouldMatchers {
 
     docMetaDao.find(jobId) match {
       case Nil => fail(s"Did not find $maxDocs meta documents")
-      case docs  => docs.size should equal (maxDocs)
+      case `docs` => docs.size should equal(maxDocs)
     }
 
   }

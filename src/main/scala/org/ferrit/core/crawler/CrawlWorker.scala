@@ -1,23 +1,22 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Actor, Props, ActorRef}
+import akka.actor.{Actor, ActorRef}
 import akka.event.Logging
 import akka.pattern.{ask, pipe}
+import akka.routing.Listeners
 import akka.util.Timeout
-import akka.routing.{Listeners, Deafen, WithListeners}
-import scala.concurrent.{ExecutionContext, Future}
-import scala.concurrent.duration._
-import scala.util.{Failure,Success}
-import org.joda.time.{DateTime, Duration}
-import org.ferrit.core.filter.UriFilter
-import org.ferrit.core.uri.{CrawlUri, Frontier, FetchJob, UriCache}
 import org.ferrit.core.crawler.FetchMessages._
-import org.ferrit.core.http.{HttpClient, Get, Response, DefaultResponse, Stats}
+import org.ferrit.core.http.{DefaultResponse, Get, HttpClient, Response, Stats}
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.parser.{ContentParser, ParserResult}
-import org.ferrit.core.robot.RobotRulesCacheActor
 import org.ferrit.core.robot.RobotRulesCacheActor.{Allow, DelayFor}
-import org.ferrit.core.util.{Counters, Media, MediaCounters, Stopwatch}
+import org.ferrit.core.uri.{CrawlUri, FetchJob, Frontier, UriCache}
+import org.ferrit.core.util.{Counters, MediaCounters, Stopwatch}
+import org.joda.time.{DateTime, Duration}
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 
 /**
@@ -37,8 +36,8 @@ class CrawlWorker(
 
   ) extends Actor with Listeners {
 
-  
-  import CrawlWorker._
+
+  import org.ferrit.core.crawler.CrawlWorker._
 
   private [crawler] implicit val execContext = context.system.dispatcher
   private [crawler] val scheduler = context.system.scheduler
@@ -61,16 +60,14 @@ class CrawlWorker(
       val outcome = initCrawler
       outcome
         .pipeTo(sender)
-        .map {reply => 
-          reply match {
-            case StartOkay(_, _) =>
-              context.become(crawlRunning)
-              gossip(reply)
-              self ! NextDequeue
-            case StartFailed(_, _) =>
-              stopWith(reply)
-          }
-        }
+          .map {
+        case reply@StartOkay(_, _) =>
+          context.become(crawlRunning)
+          gossip(reply)
+          self ! NextDequeue
+        case reply@StartFailed(_, _) =>
+          stopWith(reply)
+      }
   }
 
   def crawlRunning: Receive = listenerManagement orElse {
@@ -199,10 +196,10 @@ class CrawlWorker(
   private def scheduleNext:Unit = {
     frontier.dequeue match {
       case Some(f: FetchJob) =>
-        getFetchDelayFor(f.uri) map({delay =>
+        getFetchDelayFor(f.uri) map { delay =>
           gossip(FetchScheduled(f, delay))
           scheduler.scheduleOnce(delay.milliseconds, self, NextFetch(f))
-        })
+        }
       case None => // empty frontier, code smell to fix
     }
   }
@@ -212,14 +209,14 @@ class CrawlWorker(
     def doNext = self ! NextDequeue
     val stopwatch = new Stopwatch
 
-    val result = (for {
+    val result = for {
       response <- fetch(f)
       parseResultOpt = parseResponse(response)
 
     } yield {
 
       emitFetchResult(f, response, parseResultOpt, stopwatch.duration)
-      
+
       parseResultOpt match {
         case None => doNext
         case Some(parserResult) =>
@@ -235,20 +232,20 @@ class CrawlWorker(
               case Some(uri) => uris = uris + uri
               case _ => errors = errors + l.failMessage
             })
-            errors.foreach(_ match {
+            errors.foreach {
               case Some(msg) => log.error(s"URI parse fail: [$msg]")
-              case _ => 
-            })
+              case _ =>
+            }
 
             val jobs = uris.map(FetchJob(_, f.depth + 1))
 
             // must enqueue BEFORE next fetch
             enqueueFetchJobs(jobs)
-              .map({_ => doNext})
-              .recover({ case t => stopWithFailure(t) })
+                .map({ _ => doNext})
+                .recover({ case t => stopWithFailure(t)})
           }
       }
-    })
+    }
 
     result.recover({
       case t =>
@@ -322,7 +319,7 @@ class CrawlWorker(
 
     rcounters = rcounters.increment(""+response.statusCode)
     response.statusCode match {
-      case code if (code >= 200 && code <= 299) =>
+      case code if code >= 200 && code <= 299 =>
         fcounters = fcounters.increment(FetchSucceeds)
         mcounters = mcounters.add(
           response.contentType.getOrElse("undefined"), 1, response.contentLength
@@ -332,8 +329,8 @@ class CrawlWorker(
         } else {
           Some(contentParser.parse(response))
         }
-        
-      case code if (code >= 300 && code <= 399) =>
+
+      case code if code >= 300 && code <= 399 =>
         fcounters = fcounters.increment(FetchRedirects)
         None
 
@@ -355,12 +352,12 @@ class CrawlWorker(
   private def getFetchDelayFor(uri: CrawlUri):Future[Long] = {
     val defDelay = config.crawlDelayMillis
     robotRulesCache
-      .ask(DelayFor(config.getUserAgent, uri.reader))(robotRequestTimeout)
-      .mapTo[Option[Int]]
-      .map(_ match {
-          case Some(rulesDelay) => Math.max(rulesDelay, defDelay)
-          case None => defDelay
-      })
+        .ask(DelayFor(config.getUserAgent, uri.reader))(robotRequestTimeout)
+        .mapTo[Option[Int]]
+        .map {
+      case Some(rulesDelay) => Math.max(rulesDelay, defDelay)
+      case None => defDelay
+    }
   }
 
   /**
@@ -373,24 +370,30 @@ class CrawlWorker(
 }
 
 object CrawlWorker {
-  
-  // Public messages
-  case object Run
-  case object StopCrawl
-
-  sealed abstract class Started
-  case class StartOkay(msg: String, job: CrawlJob) extends Started()
-  case class StartFailed(t: Throwable, config: CrawlConfig) extends Started()
-  case class Stopped(outcome: CrawlOutcome, job: CrawlJob)
-  case object EmptyFrontier
-
-  // Internal messages
-  private [crawler] case object NextDequeue
-  private [crawler] case class  NextFetch(f: FetchJob)
 
   val FetchAttempts = "FetchAttempts"
   val FetchSucceeds = "FetchSucceeds"
   val FetchFails = "FetchFails"
   val FetchRedirects = "Redirects"
+
+  sealed abstract class Started
+
+  case class StartOkay(msg: String, job: CrawlJob) extends Started()
+
+  case class StartFailed(t: Throwable, config: CrawlConfig) extends Started()
+
+  case class Stopped(outcome: CrawlOutcome, job: CrawlJob)
+
+  private [crawler] case class  NextFetch(f: FetchJob)
+
+  // Public messages
+  case object Run
+
+  case object StopCrawl
+
+  case object EmptyFrontier
+
+  // Internal messages
+  private[crawler] case object NextDequeue
 
 }

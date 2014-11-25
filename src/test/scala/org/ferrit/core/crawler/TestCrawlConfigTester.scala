@@ -1,16 +1,16 @@
 package org.ferrit.core.crawler
 
+import org.ferrit.core.crawler.CrawlConfigTester.{Result, Results}
+import org.ferrit.core.filter.FirstMatchUriFilter
+import org.ferrit.core.filter.FirstMatchUriFilter.Accept
+import org.ferrit.core.uri.CrawlUri
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
-import org.ferrit.core.crawler.CrawlConfigTester.{Results, Result}
-import org.ferrit.core.filter.{UriFilter, FirstMatchUriFilter}
-import org.ferrit.core.filter.FirstMatchUriFilter.{Accept, Reject}
-import org.ferrit.core.uri.CrawlUri
 
 
 class TestCrawlConfigTester extends FlatSpec with ShouldMatchers {
-  
-  import CrawlConfigTester.Passed
+
+  import org.ferrit.core.crawler.CrawlConfigTester.Passed
 
   val baseConfig = CrawlConfig(
     id = "1234",
@@ -38,9 +38,9 @@ class TestCrawlConfigTester extends FlatSpec with ShouldMatchers {
 
     CrawlConfigTester.testConfig(config) should equal (
       Results(
-        true, 
-        Seq(Result(CrawlUri(uri), true, Passed)),
-        Seq(Result(CrawlUri(uri), true, Passed))
+        allPassed = true,
+        Seq(Result(CrawlUri(uri), passed = true, Passed)),
+        Seq(Result(CrawlUri(uri), passed = true, Passed))
       )
     )
 

@@ -1,7 +1,5 @@
 package org.ferrit.core.util
 
-import scala.util.matching.Regex
-
 
 object KeyValueParser {
 
@@ -31,7 +29,7 @@ object KeyValueParser {
             bindFn(m.group(1), m.group(2).trim)
         case m => 
             throw new IllegalArgumentException(
-              s"Unrecognised directive on line [${line}]. " + 
+              s"Unrecognised directive on line [$line]. " +
               "Directives should be one of [%s]".format(directives.mkString(","))
             )
       }

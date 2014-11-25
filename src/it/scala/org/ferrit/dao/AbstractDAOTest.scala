@@ -21,7 +21,7 @@ abstract class AbstractDAOTest(
   
   val ttl = 
     CassandraColumnTTL(
-      CassandraTables.AllTables.map(t => (t -> 60*60*24)).toMap
+      CassandraTables.AllTables.map(t => t -> 60 * 60 * 24).toMap
     )
   
 

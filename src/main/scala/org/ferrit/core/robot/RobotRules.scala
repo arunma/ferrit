@@ -39,7 +39,7 @@ case class RobotRules(
       if (uriPath.trim.isEmpty) "/" 
       else RobotRulesParser.clean(uriPath)
 
-    allows.find(cleanPath.startsWith(_)) match {
+    allows.find(cleanPath.startsWith) match {
       case Some(p) => true
       case None => 
         disallows.find(d => "/"==d || cleanPath.startsWith(d)) 

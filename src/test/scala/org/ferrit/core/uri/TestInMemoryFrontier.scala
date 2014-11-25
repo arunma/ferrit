@@ -1,6 +1,5 @@
 package org.ferrit.core.uri
 
-import scala.collection.immutable.Range
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
@@ -29,7 +28,7 @@ class TestInMemoryFrontier extends FlatSpec with ShouldMatchers {
     // Performance drops off a cliff after 5K items added
 
     val queue = new InMemoryFrontier
-    val range = (1 to maxSize)
+    val range = 1 to maxSize
     
     range.foreach(i => {
       val uri = CrawlUri("http://website.com/page" + i)

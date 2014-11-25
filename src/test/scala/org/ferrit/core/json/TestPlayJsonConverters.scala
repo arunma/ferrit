@@ -1,18 +1,15 @@
 package org.ferrit.core.json
 
-import scala.util.{Try, Success, Failure}
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
-import play.api.libs.json._
-import org.ferrit.core.crawler.{CrawlConfig, CrawlRejectException}
+import org.ferrit.core.crawler.CrawlConfig
 import org.ferrit.core.filter.FirstMatchUriFilter
 import org.ferrit.core.filter.FirstMatchUriFilter.{Accept => FAccept, Reject => FReject}
 import org.ferrit.core.filter.PriorityRejectUriFilter.{Accept => PAccept, Reject => PReject}
+import org.ferrit.core.json.PlayJsonImplicits.{crawlConfigReads, crawlConfigWrites, firstMatchUriFilterWrites, uriFilterReads}
 import org.ferrit.core.test.CustomMatchers
-import org.ferrit.core.json.PlayJsonImplicits.{uriFilterReads, firstMatchUriFilterWrites}
-import org.ferrit.core.json.PlayJsonImplicits.{priorityRejectUriFilterWrites}
-import org.ferrit.core.json.PlayJsonImplicits.{crawlConfigReads, crawlConfigWrites}
 import org.ferrit.core.uri.CrawlUri
+import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
+import play.api.libs.json._
 
 
 class TestPlayJsonConverters extends FlatSpec with ShouldMatchers with CustomMatchers {

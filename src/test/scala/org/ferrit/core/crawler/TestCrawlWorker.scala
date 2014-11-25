@@ -215,16 +215,16 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
       case Stopped(CompletedOkay, job) => 
         List(job.fetchCounters, job.responseCounters, job.mediaCounters) should equal (List(
           Map(
-            FetchAttempts -> 6, // 1 index, 3 html, 1 css, 1 png, but no .txt
-            FetchSucceeds -> 4, // 3 html, 1 css
-            FetchFails -> 2 // 1 page3.html, 1 png
+            FetchAttempts -> 5, // 1 index, 3 html, 1 png, but no .txt
+            FetchSucceeds -> 4, // 3 html
+            FetchFails -> 1 // 1 page3.html, 1 png
           ),
           Map(
             "200" -> 4,
-            "404" -> 2 // page3.html + png
+            "404" -> 1 // page3.html + png
           ),
           Map(
-            "text/html; charset=UTF-8" -> Media(3, 744),
+            "text/html; charset=UTF-8" -> Media(3, 759),
             "text/css; charset=UTF-8" -> Media(1, 42)
           )
         ))
@@ -562,7 +562,7 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
               "200" -> found
             ),
             Map(
-              "text/html; charset=UTF-8" -> Media(found, 920)
+              "text/html; charset=UTF-8" -> Media(found, 945)
             )
         ))
         true

@@ -1,7 +1,5 @@
 package org.ferrit.core.http
 
-import org.ferrit.core.uri.CrawlUri
-
 
 trait Response {
 
@@ -22,7 +20,7 @@ trait Response {
   def content: Array[Byte]
   def contentLength: Int = content.length
   def contentString: String = new String(content, DefaultEncoding)
-  def contentExists: Boolean = !content.isEmpty
+  def contentExists: Boolean = content.nonEmpty
   def contentType: Option[String] = firstHeader(ContentTypeHeader)
     
   def stats: Stats

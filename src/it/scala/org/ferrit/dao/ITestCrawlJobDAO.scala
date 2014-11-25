@@ -1,10 +1,11 @@
 package org.ferrit.dao
 
-import scala.util.Random
-import org.joda.time.DateTime
-import org.scalatest.matchers.ShouldMatchers
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.util.Media
+import org.joda.time.DateTime
+import org.scalatest.matchers.ShouldMatchers
+
+import scala.util.Random
 
 
 class ITestCrawlJobDAO extends AbstractDAOTest with ShouldMatchers {
@@ -114,14 +115,14 @@ class ITestCrawlJobDAO extends AbstractDAOTest with ShouldMatchers {
 
     jobDao.find(crawlerId) match {
       case Nil => fail(s"No jobs found")
-      case jobs => jobs.size should equal (maxJobs)
+      case findJobs => findJobs.size should equal(maxJobs)
     }
 
     jobDao.insertByDate(jobs)
 
     jobDao.find(randomDateRange) match {
       case Nil => fail(s"No jobs found")
-      case jobs => jobs.size should equal (maxJobs)
+      case findJobs => findJobs.size should equal(maxJobs)
     }
 
   }

@@ -1,9 +1,10 @@
 package org.ferrit.core.test
 
-import scala.concurrent.ExecutionContext
 import org.ferrit.core.http.{Request, Response}
-import org.ferrit.core.util.Headers
 import org.ferrit.core.test.FakeHttpClient.NotFound
+import org.ferrit.core.util.Headers
+
+import scala.concurrent.ExecutionContext
 
 
 /**
@@ -59,13 +60,13 @@ import org.ferrit.core.test.FakeHttpClient.NotFound
  */
 class LinkedListHttpClient(domainName: String, totalPages: Int)(implicit ec: ExecutionContext) extends FakeHttpClient {
 
+  override implicit val _ec: ExecutionContext = ec
   val headers = Map(Headers.ContentTypeTextHtmlUtf8)
   val linkHtml = """<a href="%s/page%s.html">link text</a>"""
-  val UriPath = """page(\d+)\.html""".r
 
   // The HTML is small because the larger the template the more work 
   // the link extracting HTML parser will need to do per page.
-
+  val UriPath = """page(\d+)\.html""".r
   val html = """
         |<!DOCTYPE html>
         |<html lang="en-US">
@@ -79,8 +80,6 @@ class LinkedListHttpClient(domainName: String, totalPages: Int)(implicit ec: Exe
         |</body>
         |</html>
         """.stripMargin
-    
-  override implicit val _ec: ExecutionContext = ec
 
   override def handleRequest(request: Request):Response = {
 
@@ -103,7 +102,7 @@ class LinkedListHttpClient(domainName: String, totalPages: Int)(implicit ec: Exe
       } else {
         val pageNum = for {
           UriPath(n) <- UriPath.findFirstMatchIn(reader.path)
-        } yield (n)
+        } yield n
 
         pageNum match {
           case Some(numStr) =>

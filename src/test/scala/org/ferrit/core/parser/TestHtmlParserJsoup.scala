@@ -1,13 +1,12 @@
 package org.ferrit.core.parser
 
+import org.ferrit.core.http.{DefaultResponse, Get, Request, Response, Stats}
+import org.ferrit.core.uri.CrawlUri
+import org.ferrit.core.util.HttpUtil._
+import org.ferrit.core.util.TagUtil
+import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
-import org.mockito.Mockito._
-import org.ferrit.core.http.{Get, Request, Response, DefaultResponse}
-import org.ferrit.core.http.Stats
-import org.ferrit.core.uri.CrawlUri
-import org.ferrit.core.util.TagUtil
-import org.ferrit.core.util.HttpUtil._
 
 
 class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
@@ -25,7 +24,7 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
       r
     }
 
-    val parser = new HtmlParserJsoup  
+    val parser = HtmlParserJsoup
     parser.canParse(responseOf("text/css")) should equal (false)
     parser.canParse(responseOf("html")) should equal (false)
     parser.canParse(responseOf("text")) should equal (false)
@@ -61,7 +60,7 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
         |</html>
         """.stripMargin
 
-    val parser = new HtmlParserJsoup
+    val parser = HtmlParserJsoup
     val request = makeRequest("http://site.com/page1.html")
     val response = makeResponse(html, request)
     val result: ParserResult = parser.parse(response)
@@ -87,16 +86,15 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
         |</html>
         """.stripMargin
 
-    val parser = new HtmlParserJsoup
+    val parser = HtmlParserJsoup
     val request = makeRequest("http://site.com/page1.html")
     val response = makeResponse(html, request)
     val result: ParserResult = parser.parse(response)
-    
-    result.links should contain (Link(css_url,  "screen.css", "", false, Some(CrawlUri("http://site.com/screen.css")), None))
-    result.links should contain (Link("img",    "cat_photo.png",  "", true, Some(CrawlUri("http://site.com/cat_photo.png")), None))
-    result.links should contain (Link("script", "script.js",  "", false, Some(CrawlUri("http://site.com/script.js")), None))
-    result.links should contain (Link("a",      "page2.html", "this link", false, Some(CrawlUri("http://site.com/page2.html")), None))
-    result.links.size should equal (4)
+
+    result.links should contain(Link("img", "cat_photo.png", "", noFollow = true, Some(CrawlUri("http://site.com/cat_photo.png")), None))
+    result.links should contain(Link("script", "script.js", "", noFollow = false, Some(CrawlUri("http://site.com/script.js")), None))
+    result.links should contain(Link("a", "page2.html", "this link", noFollow = false, Some(CrawlUri("http://site.com/page2.html")), None))
+    result.links.size should equal(3)
 
   }
   
@@ -107,44 +105,12 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
         |<base href="should be ignored"></base>
         |</head><body/></html>""".stripMargin
 
-    val parser = new HtmlParserJsoup
+    val parser = HtmlParserJsoup
     val request = makeRequest("http://site.com/page1.html")
     val response = makeResponse(html, request)
     val result: ParserResult = parser.parse(response)
 
     result.links should equal (Set.empty)
-    
-  }
-
-  it should "parse style import URLs" in {
-
-    val html = """
-        |<!doctype html>
-        |<html>
-        |  <head>
-        |    <title>Test Page</title>
-        |    <style>@import url('screen1.css');</style>
-        |    <style>@import url("screen2.css");</style>
-        |  </head>
-        |<body>
-        |  <style>
-        |    color: red;
-        |    @import url ('screen3.css');
-        |    font-size: 1em;
-        |  </style>
-        |</body>
-        |</html>
-        """.stripMargin
-
-    val parser = new HtmlParserJsoup
-    val request = makeRequest("http://site.com/page1.html")
-    val response = makeResponse(html, request)
-    val result: ParserResult = parser.parse(response)
-
-    result.links should contain (Link(css_url, "screen3.css", "", false, Some(CrawlUri("http://site.com/screen3.css")), None))
-    result.links should contain (Link(css_url, "screen2.css", "", false, Some(CrawlUri("http://site.com/screen2.css")), None))
-    result.links should contain (Link(css_url, "screen1.css", "", false, Some(CrawlUri("http://site.com/screen1.css")), None))
-    result.links.size should equal (3)
     
   }
 
@@ -165,20 +131,20 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
         |</html>
         """.stripMargin
 
-    val parser = new HtmlParserJsoup
+    val parser = HtmlParserJsoup
     val request = makeRequest("http://site.com/page1.html")
     val response = makeResponse(html, request)
     val result: ParserResult = parser.parse(response)
 
-    result.links should contain (Link("a", "http://site2.com/page2.html", "this link", false, Some(CrawlUri("http://site2.com/page2.html")), None))
-    result.links should contain (Link("a", "page1.html", "this link", false, Some(CrawlUri("http://site3.com/page1.html")), None))
+    result.links should contain(Link("a", "http://site2.com/page2.html", "this link", noFollow = false, Some(CrawlUri("http://site2.com/page2.html")), None))
+    result.links should contain(Link("a", "page1.html", "this link", noFollow = false, Some(CrawlUri("http://site3.com/page1.html")), None))
     result.links.size should equal (2)
     
   }
 
   it should "identify the meta noindex directive" in {
-    
-    val parser = new HtmlParserJsoup
+
+    val parser = HtmlParserJsoup
     
     def expecting(expected: Boolean, html: String) = {
       val request = makeRequest("http://site.com")
@@ -191,18 +157,18 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
       |<meta name="robots" content="%s" />
       |</head><body/></html>""".stripMargin
 
-    expecting(true, html.format("noindex"))
-    expecting(true, html.format("NOINDEX"))
-    expecting(true, html.format("noindex, nofollow"))
-    expecting(true, html.format("nofollow, noindex"))
-    expecting(false, html.format("nofollow"))
-    expecting(false, html.format("noindexing"))
+    expecting(expected = true, html.format("noindex"))
+    expecting(expected = true, html.format("NOINDEX"))
+    expecting(expected = true, html.format("noindex, nofollow"))
+    expecting(expected = true, html.format("nofollow, noindex"))
+    expecting(expected = false, html.format("nofollow"))
+    expecting(expected = false, html.format("noindexing"))
     
   }
 
   it should "identify the meta nofollow directive" in {
-    
-    val parser = new HtmlParserJsoup
+
+    val parser = HtmlParserJsoup
     
     def expecting(expected: Boolean, html: String) = {
       val request = makeRequest("http://site.com")
@@ -215,12 +181,12 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
       |<meta name="robots" content="%s" />
       |</head><body/></html>""".stripMargin
 
-    expecting(true, html.format("nofollow"))
-    expecting(true, html.format("NOFOLLOW"))
-    expecting(true, html.format("noindex, nofollow"))
-    expecting(true, html.format("nofollow, noindex"))
-    expecting(false, html.format("noindex"))
-    expecting(false, html.format("nofollowing"))
+    expecting(expected = true, html.format("nofollow"))
+    expecting(expected = true, html.format("NOFOLLOW"))
+    expecting(expected = true, html.format("noindex, nofollow"))
+    expecting(expected = true, html.format("nofollow, noindex"))
+    expecting(expected = false, html.format("noindex"))
+    expecting(expected = false, html.format("nofollowing"))
     
   }
 
@@ -235,11 +201,11 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
 
     val request = makeRequest("http://site.com/page1.html")
     val response = makeResponse(html, request)
-    val result: ParserResult = new HtmlParserJsoup().parse(response)
+    val result: ParserResult = HtmlParserJsoup.parse(response)
 
     result.links.size should equal (3)
-    result.links.filter(_.crawlUri.nonEmpty).size should equal (2)
-    result.links.filter(_.failMessage.nonEmpty).size should equal (1)
+    result.links.count(_.crawlUri.nonEmpty) should equal(2)
+    result.links.count(_.failMessage.nonEmpty) should equal(1)
 
   }
 

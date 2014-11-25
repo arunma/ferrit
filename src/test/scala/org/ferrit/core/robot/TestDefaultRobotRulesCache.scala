@@ -1,15 +1,15 @@
 package org.ferrit.core.robot
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import org.ferrit.core.uri.{CrawlUri, UriReader}
-import org.ferrit.core.http.{HttpClient, Request, Response}
-import org.ferrit.core.http.{DefaultResponse, Stats, NingAsyncHttpClient}
+import org.ferrit.core.http.{DefaultResponse, HttpClient, Request, Response, Stats}
 import org.ferrit.core.test.FakeHttpClient.TextResponse
 import org.ferrit.core.test.ParrotHttpClient
+import org.ferrit.core.uri.CrawlUri
+import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 
 class TestDefaultRobotRulesCache extends FlatSpec with ShouldMatchers {
@@ -86,9 +86,9 @@ class TestDefaultRobotRulesCache extends FlatSpec with ShouldMatchers {
         Future {
           val site = r.crawlUri.reader.schemeToPort
           val content = contentMap.get(site) match {
-            case Some(content) =>
+            case Some(c) =>
               founds += 1
-              content
+              c
             case None =>
               notFounds += 1
               ""

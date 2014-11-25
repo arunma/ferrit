@@ -1,63 +1,42 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{ActorSystem, Actor, ActorRef, Props}
-import akka.testkit.{TestKit, ImplicitSender}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
+import akka.testkit.{ImplicitSender, TestKit}
 import akka.util.Timeout
-import scala.concurrent.{Await, Future, Promise}
-import scala.concurrent.duration._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
-import org.scalatest.matchers.ShouldMatchers
 import org.ferrit.core.crawler.CrawlWorker.Stopped
 import org.ferrit.core.filter.FirstMatchUriFilter
 import org.ferrit.core.filter.FirstMatchUriFilter.Accept
 import org.ferrit.core.http.{HttpClient, Request, Response}
 import org.ferrit.core.model.CrawlJob
-import org.ferrit.core.robot.{RobotRulesCache, DefaultRobotRulesCache, RobotRulesCacheActor}
-import org.ferrit.core.test.{LinkedListHttpClient, FakeHttpClient}
+import org.ferrit.core.robot.{DefaultRobotRulesCache, RobotRulesCacheActor}
 import org.ferrit.core.test.FakeHttpClient.HtmlResponse
+import org.ferrit.core.test.{FakeHttpClient, LinkedListHttpClient}
 import org.ferrit.core.uri.CrawlUri
-import org.ferrit.core.util.{Counters, UniqueId}
+import org.ferrit.core.util.UniqueId
+import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future, Promise}
 
 
 class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
   
   behavior of "CrawlerManager"
 
-  import SpiderManager._
+  import org.ferrit.core.crawler.SpiderManager._
 
   implicit val system = ActorSystem("test")
   implicit val execContext = system.dispatcher
   val node = "localhost"
   val userAgent = "Test Agent"
+  val askTimeout = new Timeout(1.second)
+  val NoLogger = Nil // or Some(logger)
 
   def logger = system.actorOf(Props[CrawlLog])
 
   override def afterAll():Unit = system.shutdown()
-
-  class ManagerTest extends TestKit(system) with ImplicitSender {
-
-    /**
-     * All crawlers use the same robot rules cache 
-     */
-    def robotRulesCache(httpClient: HttpClient) = {
-      system.actorOf(Props(
-        classOf[RobotRulesCacheActor], 
-        new DefaultRobotRulesCache(httpClient)
-      ))
-    }  
-
-    def makeManager(maxCrawlers: Int, httpClient: HttpClient):ActorRef = 
-      system.actorOf(Props(
-        classOf[SpiderManager],
-        node,
-        userAgent,
-        maxCrawlers, 
-        httpClient,
-        robotRulesCache(httpClient)
-      ))
-
-  }
 
   def makeConfig(uri: String) = CrawlConfig(
       id = UniqueId.next,
@@ -74,9 +53,26 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
       maxRequestFails = 0.5
     )
 
-  val askTimeout = new Timeout(1.second)
+  def makeHtml(links: Int) =
+    ("""
+       |<html>
+       |<head>
+       |<title>Test Page</title>
+       |</head>
+       |<body>
+       |<h1>Test Page</h1>
+       |<p>The section below contains a batch of auto-generated anchors:</p>
+     """ + {
 
-  val NoLogger = Nil // or Some(logger)
+      val range = 0 until (links - 1)
+      scala.util.Random.shuffle(
+        range.map(i => s"<a href='page$i'>link text</a>")
+      ).mkString
+
+    } + """
+          |</body>
+          |</html>
+          | """).stripMargin
 
 
   it should "not accept new job with duplicate crawler configuration" in new ManagerTest {
@@ -144,14 +140,14 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
       }
       opt match {
         case None => fail("new CrawlJob not created or found?")
-        case Some(job) => job
+        case Some(j) => j
       }
     }
 
     manager ! JobsQuery()
     fishForMessage(1.second) {
       case JobsInfo(Seq(CrawlJob(crawlerId, _, id, _,_,_,_,_,_,_,_,_,_,_,_,_ )))
-        if (config.id == crawlerId && job.jobId == id) => true
+        if config.id == crawlerId && job.jobId == id => true
     }
 
   }
@@ -177,17 +173,17 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
       }
       opt match {
         case None => fail("new CrawlJob not created or found?")
-        case Some(job) => job
+        case Some(j) => j
       }
     }
   
     manager ! StopJob(job.jobId)
     fishForMessage(1.second) {
-       case StopAccepted(Seq(id)) if (job.jobId == id) => true
+      case StopAccepted(Seq(id)) if job.jobId == id => true
     }
     manager ! JobsQuery()
     fishForMessage(1.second) {
-       case JobsInfo(jobs) if (jobs.isEmpty) => true
+      case JobsInfo(jobs) if jobs.isEmpty => true
        case other => 
         manager ! JobsQuery() // keep asking until timeout
         false
@@ -214,7 +210,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     manager ! JobsQuery()
     fishForMessage(1.second) {
-       case JobsInfo(jobs) if (jobs.isEmpty) => true
+      case JobsInfo(jobs) if jobs.isEmpty => true
        case other => 
         manager ! JobsQuery() // keep asking until timeout
         false
@@ -359,25 +355,28 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
   }
 
-  def makeHtml(links: Int) = 
-      ("""
-      |<html>
-      |<head>
-      |<title>Test Page</title>
-      |</head>
-      |<body>
-      |<h1>Test Page</h1>
-      |<p>The section below contains a batch of auto-generated anchors:</p>
-      """ + {
-        
-        val range = 0 until (links-1)
-        scala.util.Random.shuffle(
-          range.map(i => s"<a href='page$i'>link text</a>")
-        ).mkString
+  class ManagerTest extends TestKit(system) with ImplicitSender {
 
-      } + """
-      |</body>
-      |</html>
-      |""").stripMargin
+    def makeManager(maxCrawlers: Int, httpClient: HttpClient): ActorRef =
+      system.actorOf(Props(
+        classOf[SpiderManager],
+        node,
+        userAgent,
+        maxCrawlers,
+        httpClient,
+        robotRulesCache(httpClient)
+      ))
+
+    /**
+     * All crawlers use the same robot rules cache
+     */
+    def robotRulesCache(httpClient: HttpClient) = {
+      system.actorOf(Props(
+        classOf[RobotRulesCacheActor],
+        new DefaultRobotRulesCache(httpClient)
+      ))
+    }
+
+  }
 
 }

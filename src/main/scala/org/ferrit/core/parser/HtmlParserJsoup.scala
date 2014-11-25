@@ -2,102 +2,72 @@ package org.ferrit.core.parser
 
 import org.ferrit.core.http.Response
 import org.ferrit.core.uri.CrawlUri
-import org.ferrit.core.util.JsoupSugar.elementsToSeq
-import org.ferrit.core.util.TagUtil.{CssImportUrl, CssTagEquiv, HtmlUriAttributes}
 import org.ferrit.core.util.{MediaType, Stopwatch}
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
+import org.jsoup.nodes.{Document, Element}
 
+object JsoupImplicits {
 
-/**
- * A Jsoup backed HtmlParser to extract crawlable links.
- * *** Jsoup is totally freakin' cool by the way ***
- */
-class HtmlParserJsoup extends ContentParser {
+  import scala.collection.JavaConverters._
+  import scala.language.implicitConversions
 
-  override def parse(response: Response):ParserResult = {
+  implicit def elementsToSeq(elms: java.lang.Iterable[Element]): Seq[Element] =
+    elms.asScala.toSeq
+}
 
-    if (!canParse(response)) throw new ParseException(
-      "Cannot parse response"
-    )
+object HtmlParserJsoup extends ContentParser {
 
+  import org.ferrit.core.parser.JsoupImplicits._
+
+  val HtmlUriAttributes = Seq("href", "src", "cite", "data")
+
+  override def parse(response: Response): ParserResult = {
+    if (!canParse(response))
+      throw new ParseException("Cannot parse response")
     val stopwatch = new Stopwatch
-
     val reqUri = response.request.crawlUri
-    val content: String = response.contentString
-    val doc: Document = Jsoup.parse(content)
-
-    // Work out if the base URL used for relative links in this document
-    // will be either the document's own URL or a possible <base> tag.
-    // (Jsoup can return a <base> with empty href attribute)
-
-    val base:CrawlUri = doc.select("base[href]").headOption match {
+    val doc = Jsoup.parse(response.contentString)
+    val base = doc.select("base[href]").headOption match {
       case Some(e) => e.attr("href").trim match {
-          case "" => reqUri // assume <base> not found
-          case href => CrawlUri(reqUri, href)
-        }
+        case "" => reqUri // assume <base> not found
+        case href => CrawlUri(reqUri, href)
+      }
       case None => reqUri
     }
 
-    // Check <meta> for noindex/nofollow directives
-
-    val metaQuery = """meta[name=robots][content~=(?i)\b%s\b]"""
-    val head = doc.head
-    val noIndex = head.select(metaQuery format "noindex").nonEmpty
-    val noFollow = head.select(metaQuery format "nofollow").nonEmpty
-
-    // Check elements with attributes like href/src for links.
-    // Ignores <base> elements.
-
-    var links: List[Link] = List.empty
-
-    HtmlUriAttributes.foreach(attr => {
-      doc.select(s"[$attr]:not(base)").toSeq
-        .foreach(e => {
-            val nfLink =
-                if (noFollow) noFollow
-                else "nofollow" == e.attr("rel").toLowerCase
-            val uriAttr = e.attr(attr).trim // e.g. src or href
-            if (!uriAttr.isEmpty) {
-              val (uri, failMsg) = makeUri(base, uriAttr)
-              val link = Link(
-                  e.nodeName,
-                  uriAttr,
-                  e.text,
-                  nfLink,
-                  uri,
-                  failMsg
-              )
-              links = link :: links
-            }
-        })
-    })
-
-    // Examine <style> for @import url('...')
-
-    doc.select("style").toSeq foreach (style => {
-      val styleLinks = (for {
-        CssImportUrl(quote, uriAttr) <- CssImportUrl findAllMatchIn style.data
-        if !uriAttr.trim.isEmpty
-      } yield {
-        val (absUri, failMsg) = makeUri(base, uriAttr)
-        Link(CssTagEquiv, uriAttr, "", false, absUri, failMsg)
-      }).toSeq
-      links = styleLinks ++: links
-    })
-
-    DefaultParserResult(links.toSet, noIndex, noFollow, stopwatch.duration)
-
+    val (links, noIndex, noFollow) = parseHtmlDoc(base, doc)
+    DefaultParserResult(links, noIndex, noFollow, stopwatch.duration)
   }
 
-  override def canParse(response: Response):Boolean =
+  override def canParse(response: Response): Boolean =
     MediaType.is(response, MediaType.Html)
-  
-  private def makeUri(base:CrawlUri, uriAttr:String):(Option[CrawlUri], Option[String]) =
+
+  def parseHtmlDoc(base: CrawlUri, doc: Document) = {
+    // Check <meta> for noindex/nofollow directives
+    val metaQuery = """meta[name=robots][content~=(?i)\b%s\b]"""
+    val head = doc.head
+
+    // Check elements with attributes like href/src for links. Ignores <base> elements.
+    val links = for {
+      attr <- HtmlUriAttributes
+      e <- doc.select(s"[$attr]:not(base)")
+      nfLink = if (head.select(metaQuery format "nofollow").nonEmpty) head.select(metaQuery format "nofollow").nonEmpty else "nofollow" == e.attr("rel").toLowerCase
+      uriAttr = e.attr(attr).trim // e.g. src or href
+      if !uriAttr.isEmpty
+      (uri, failMsg) = makeUri(base, uriAttr)
+    } yield Link(e.nodeName, uriAttr, e.text, nfLink, uri, failMsg)
+
+    (links.toSet,
+        head.select(metaQuery format "noindex").nonEmpty,
+        head.select(metaQuery format "nofollow").nonEmpty
+        )
+  }
+
+  def makeUri(base: CrawlUri, uriAttr: String): (Option[CrawlUri], Option[String]) =
     try {
       (Some(CrawlUri(base, uriAttr)), None)
     } catch {
       case t: Throwable => (None, Some(s"base[$base] relative[$uriAttr]"))
     }
-  
 }
+
