@@ -2,8 +2,8 @@ package org.ferrit.core.util
 
 
 object KeyValueParser {
+  final val Ls = System.getProperty("line.separator")
 
-  final val Ls:String = System.getProperty("line.separator")
   private val KeyVal = """(?i)^([a-z\s-]+):\s*(.*)""".r
 
   /**
@@ -15,12 +15,10 @@ object KeyValueParser {
    *
    */
   def parse[T](
-    directives:Seq[String], 
-    lines: Seq[String], 
-    bindFn: (String,String) => T):Seq[T] = {
-    
+    directives: Seq[String],
+    lines: Seq[String],
+    bindFn: (String, String) => T): Seq[T] = {
     val Directives = directives.mkString("|")
-    
     lines
       .filterNot(l => l.trim.isEmpty || l.startsWith("#"))
       .map({line =>
@@ -34,7 +32,5 @@ object KeyValueParser {
             )
       }
     })
-
   }
-
 }

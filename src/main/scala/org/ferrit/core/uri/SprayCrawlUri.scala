@@ -1,13 +1,12 @@
 package org.ferrit.core.uri
 
+import org.ferrit.core.uri.SprayUriReader._
+import spray.http.Uri.{ParsingMode, Query}
+import spray.http.{StringRendering, Uri}
+import spray.util.UTF8
+
 import scala.annotation.tailrec
 import scala.collection.immutable.SortedMap
-import spray.http.{Uri, StringRendering}
-import spray.http.Uri.Query
-import spray.http.Uri.ParsingMode
-import spray.util.UTF8
-import java.net.URI
-import SprayUriReader._
 
 
 /**
@@ -42,48 +41,46 @@ case class SprayCrawlUri(originalUri: String) extends CrawlUri {
     else normalUri equals a.toString
   
   override def hashCode: Int = normalUri.hashCode
+
   override def toString: String = normalUri
+
   override def crawlableUri: String = normalUri
 
-  override def reader: UriReader = new SprayUriReader(originalUri, this)
-
-  
   override def absoluteCrawlableUri(base: CrawlUri): CrawlUri = {
-    val baseUri: Uri = makeUri(base.crawlableUri)
-    val absUri: Uri = getCrawlableUri.resolvedAgainst(baseUri)
+    val baseUri = makeUri(base.crawlableUri)
+    val absUri = getCrawlableUri.resolvedAgainst(baseUri)
     SprayCrawlUri(render(absUri))
   }
 
   private def getCrawlableUri: Uri = {
-    val sreader = reader.asInstanceOf[SprayUriReader]
-    sreader.uri.withoutFragment.withQuery(
-      Query(sreader.sortedQueryMap -- CrawlUri.SessionIdKeys)
+    val sReader = reader.asInstanceOf[SprayUriReader]
+    sReader.uri.withoutFragment.withQuery(
+      Query(sReader.sortedQueryMap -- CrawlUri.SessionIdKeys)
     )
   }
+
+  override def reader: UriReader = new SprayUriReader(originalUri, this)
   
   private def render(uri: Uri):String =
     uri.render(new StringRendering, UTF8).get
-  
 }
 
-class SprayUriReader(
-  val uriString: String, 
-  override val crawlUri: CrawlUri) extends UriReader {
-  
+class SprayUriReader(val uriString: String, override val crawlUri: CrawlUri) extends UriReader {
   val uri: Uri = makeUri(uriString)
 
-  override def scheme: String = uri.scheme
-  override def authority: String = uri.authority.toString
-  override def path: String = uri.path.toString
+  override def scheme = uri.scheme
+
+  override def authority = uri.authority.toString
+
+  override def path = uri.path.toString
   
   /**
    * Spray converts default ports for schemes like http or ssh to 0
    */
   override def schemeToPort: String = {
-      val a = uri.authority
       val port = uri.authority.port
       val p = if (port == 0) "" else ":" + port
-      uri.scheme + "://" + a.host + p
+    uri.scheme + "://" + uri.authority.host + p
   }
 
   /**
@@ -93,9 +90,9 @@ class SprayUriReader(
    * to reduce chance of duplicate URI being crawled.
    * Adapted from spray.http.Uri.Query.toMap method
    */
-  def sortedQueryMap:SortedMap[String,String] = {
-      @tailrec 
-      def append(map:SortedMap[String,String], q:Query):SortedMap[String,String] =
+  def sortedQueryMap: SortedMap[String, String] = {
+      @tailrec
+      def append(map: SortedMap[String, String], q: Query): SortedMap[String, String] =
         if (q.isEmpty) map 
         else append(map.updated(q.key, q.value), q.tail)
       append(SortedMap.empty, uri.query)
@@ -119,7 +116,7 @@ object SprayUriReader {
    */
   def makeUri(uri: String):Uri = Uri(clean(uri), ParsingMode.Relaxed)
 
-  private def clean(uri: String):String = 
+  private def clean(uri: String): String =
     uri
       .replaceAll(" ", "%20") // Spray blows up with spaces or newline characters
       .replaceAll("\r", "")   // Remove 3 kinds of newline: \r\n, \r, \n

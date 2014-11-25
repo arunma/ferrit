@@ -3,15 +3,14 @@ package org.ferrit.core.parser
 import org.ferrit.core.http.{DefaultResponse, Get, Request, Response, Stats}
 import org.ferrit.core.uri.CrawlUri
 import org.ferrit.core.util.HttpUtil._
-import org.ferrit.core.util.TagUtil
 import org.mockito.Mockito._
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
 
 class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
-  
-  val css_url = TagUtil.CssTagEquiv // alias for readability
+
+  val css_url = "css_url"
 
   behavior of "HtmlParserJsoup"
 

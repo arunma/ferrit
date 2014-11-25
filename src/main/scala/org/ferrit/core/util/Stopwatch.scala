@@ -4,12 +4,11 @@ package org.ferrit.core.util
  * Life is very short.
  */
 class Stopwatch {
-
   val started: Long = now
-  var stopped: Long = _
-  var isStopped: Boolean = false
 
-  private def now = System.currentTimeMillis
+  var stopped: Long = _
+
+  var isStopped: Boolean = false
 
   def duration: Long = {
     if (!isStopped) stopped = now
@@ -17,4 +16,5 @@ class Stopwatch {
     stopped - started
   }
 
+  private def now = System.currentTimeMillis
 }

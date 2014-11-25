@@ -14,18 +14,16 @@ package org.ferrit.core.uri
  * </ul>
  */
 class InMemoryUriCache extends UriCache {
-
   private var cache: Set[Integer] = Set.empty
 
-  override def size:Int = cache.size
+  override def size: Int = cache.size
 
-  override def put(uri: CrawlUri):Int = {
+  override def put(uri: CrawlUri): Int = {
     val newCache = cache + uri.hashCode
     val size = newCache.size
     cache = newCache
     size
   }
 
-  override def contains(uri: CrawlUri):Boolean = cache.contains(uri.hashCode)
-
+  override def contains(uri: CrawlUri): Boolean = cache.contains(uri.hashCode)
 }

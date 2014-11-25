@@ -5,11 +5,9 @@ package org.ferrit.core.uri
  * a crawler and do not need fetching again.
  */
 trait UriCache {
-  
   def size:Int
 
   def put(uri: CrawlUri):Int
 
   def contains(uri: CrawlUri):Boolean
-  
 }

@@ -7,13 +7,7 @@ import org.ferrit.core.http.Response
  * by Spray.IO or Apache Tika.
  */
 object MediaType {
-
-  class ContentType
-  object Text extends ContentType
-  object Html extends ContentType
-  object Css extends ContentType
-
-  def is(response: Response, mediaType: ContentType):Boolean =
+  def is(response: Response, mediaType: ContentType): Boolean =
     response.contentType match {
       case None => false
       case Some(ct) => mediaType match {
@@ -22,6 +16,13 @@ object MediaType {
         case Css => ct.startsWith("text/css")
         case _ => false // not supported
       }
-    }    
-  
+    }
+
+  class ContentType
+
+  object Text extends ContentType
+
+  object Html extends ContentType
+
+  object Css extends ContentType
 }
