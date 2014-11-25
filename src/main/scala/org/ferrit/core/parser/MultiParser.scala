@@ -7,16 +7,8 @@ import org.ferrit.core.http.Response
  * to the appropriate content parser for the given media type.
  */
 class MultiParser(parsers: Seq[ContentParser]) extends ContentParser {
-  
-  
-  override def canParse(response: Response):Boolean = 
+  override def canParse(response: Response): Boolean =
     parserFor(response).nonEmpty
-
-  override def parse(response: Response): ParserResult =
-    parserFor(response) match {
-      case Some(parser) => parser.parse(response)
-      case None => throw new ParseException(s"No parser for response")
-    }
 
   private [MultiParser] def parserFor(response: Response):Option[ContentParser] =
     response.contentType match {
@@ -24,12 +16,15 @@ class MultiParser(parsers: Seq[ContentParser]) extends ContentParser {
       case Some(ct) => parsers.find(p => p.canParse(response))
     }
 
+  override def parse(response: Response): ParserResult =
+    parserFor(response) match {
+      case Some(parser) => parser.parse(response)
+      case None => throw new ParseException(s"No parser for response")
+    }
 }
 
 object MultiParser {
-  
   def default: MultiParser = new MultiParser(
     Seq(HtmlParserJsoup)
   )
-
 }
