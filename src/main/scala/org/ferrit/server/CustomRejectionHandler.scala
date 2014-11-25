@@ -1,21 +1,17 @@
 package org.ferrit.server
 
-import spray.http.{StatusCodes}
-import spray.httpx.marshalling._
+import org.ferrit.server.json.ErrorMessage
+import org.ferrit.server.json.PlayJsonImplicits._
+import spray.http.StatusCodes
 import spray.httpx.PlayJsonSupport._
 import spray.routing.{Directives, MalformedRequestContentRejection, RejectionHandler}
-import org.ferrit.server.json.PlayJsonImplicits._
-import org.ferrit.server.json.ErrorMessage
 
 object CustomRejectionHandler extends Directives {
-  
   val UnmarshallErrorMsg = "The request entity could not be unmarshalled."
   val BadEntityMsg = "No %s found with identifier [%s]"
   val BadParamMsg = "Parameter [%s] has invalid value [%s]"
 
-
   val customRejectionHandler: RejectionHandler = RejectionHandler {
-      
     case MalformedRequestContentRejection(msg, cause) :: _ =>
       complete {
         val sc = StatusCodes.BadRequest

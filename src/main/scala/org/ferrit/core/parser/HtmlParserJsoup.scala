@@ -2,12 +2,11 @@ package org.ferrit.core.parser
 
 import org.ferrit.core.http.Response
 import org.ferrit.core.uri.CrawlUri
-import org.ferrit.core.util.{MediaType, TagUtil, Stopwatch}
 import org.ferrit.core.util.JsoupSugar.elementsToSeq
-import org.ferrit.core.util.TagUtil.{CssTagEquiv, CssImportUrl, HtmlUriAttributes}
+import org.ferrit.core.util.TagUtil.{CssImportUrl, CssTagEquiv, HtmlUriAttributes}
+import org.ferrit.core.util.{MediaType, Stopwatch}
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element}
-import org.jsoup.select.Elements
+import org.jsoup.nodes.Document
 
 
 /**
@@ -16,11 +15,8 @@ import org.jsoup.select.Elements
  */
 class HtmlParserJsoup extends ContentParser {
 
-  override def canParse(response: Response):Boolean = 
-    MediaType.is(response, MediaType.Html)
-
   override def parse(response: Response):ParserResult = {
-  
+
     if (!canParse(response)) throw new ParseException(
       "Cannot parse response"
     )
@@ -49,18 +45,17 @@ class HtmlParserJsoup extends ContentParser {
     val head = doc.head
     val noIndex = head.select(metaQuery format "noindex").nonEmpty
     val noFollow = head.select(metaQuery format "nofollow").nonEmpty
-    
 
     // Check elements with attributes like href/src for links.
     // Ignores <base> elements.
 
     var links: List[Link] = List.empty
-    
+
     HtmlUriAttributes.foreach(attr => {
       doc.select(s"[$attr]:not(base)").toSeq
         .foreach(e => {
-            val nfLink = 
-                if (noFollow) noFollow 
+            val nfLink =
+                if (noFollow) noFollow
                 else "nofollow" == e.attr("rel").toLowerCase
             val uriAttr = e.attr(attr).trim // e.g. src or href
             if (!uriAttr.isEmpty) {
@@ -77,23 +72,26 @@ class HtmlParserJsoup extends ContentParser {
             }
         })
     })
-    
+
     // Examine <style> for @import url('...')
 
     doc.select("style").toSeq foreach (style => {
       val styleLinks = (for {
         CssImportUrl(quote, uriAttr) <- CssImportUrl findAllMatchIn style.data
-        if (!uriAttr.trim.isEmpty)
+        if !uriAttr.trim.isEmpty
       } yield {
         val (absUri, failMsg) = makeUri(base, uriAttr)
         Link(CssTagEquiv, uriAttr, "", false, absUri, failMsg)
       }).toSeq
-      links = (styleLinks ++: links)
+      links = styleLinks ++: links
     })
 
     DefaultParserResult(links.toSet, noIndex, noFollow, stopwatch.duration)
 
   }
+
+  override def canParse(response: Response):Boolean =
+    MediaType.is(response, MediaType.Html)
   
   private def makeUri(base:CrawlUri, uriAttr:String):(Option[CrawlUri], Option[String]) =
     try {

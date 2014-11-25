@@ -10,9 +10,9 @@ import org.ferrit.dao.cassandra.CassandraDAOFactory
 import org.ferrit.dao.{DAOFactory, Journal}
 
 trait SpiderContext {
-  def config: Config
-
   implicit val system: ActorSystem
+
+  def config: Config
 
   def spiderManager: ActorRef
 
@@ -28,21 +28,15 @@ trait SpiderContext {
 }
 
 class ProdSpiderContext(implicit val system: ActorSystem) extends SpiderContext {
-  override def config = ConfigFactory.load()
-
   override lazy val spiderManager = system.actorOf(SpiderManager.props(config, spiderClient, robotsRuleCache))
-
   override lazy val robotsRuleCache = system.actorOf(Props(classOf[RobotRulesCacheActor],
     new DefaultRobotRulesCache(spiderClient)(system.dispatcher)))
-
   override lazy val daoFactory = new CassandraDAOFactory(config)
-
-  override lazy val logger = system.actorOf(CrawlLog.props(config))
-
+  override lazy val logger = system.actorOf(CrawlLog.props())
   override lazy val journal = system.actorOf(Props(classOf[Journal], daoFactory))
-
   override lazy val spiderClient = new NingAsyncHttpClient
 
+  override def config = ConfigFactory.load()
 }
 
 

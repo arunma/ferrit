@@ -1,28 +1,25 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Actor, ActorSystem, ActorRef, Props, Terminated}
-import akka.testkit.{TestKit, ImplicitSender, TestProbe}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.routing.Listen
-import org.scalatest.{FlatSpec, BeforeAndAfterAll}
-import org.scalatest.matchers.ShouldMatchers
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.util.Random
-import org.ferrit.core.crawler.FetchMessages._
+import akka.testkit.{ImplicitSender, TestKit}
 import org.ferrit.core.crawler.CrawlWorker._
+import org.ferrit.core.crawler.FetchMessages._
 import org.ferrit.core.filter.FirstMatchUriFilter
 import org.ferrit.core.filter.FirstMatchUriFilter._
-import org.ferrit.core.http.{HttpClient, Request, Response}
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.parser.MultiParser
 import org.ferrit.core.robot.{RobotRulesCache, RobotRulesCacheActor}
-import org.ferrit.core.uri.{CrawlUri, UriReader, InMemoryFrontier}
-import org.ferrit.core.uri.{UriCache, InMemoryUriCache}
-import org.ferrit.core.util.{Counters, MediaCounters, Media, UniqueId}
 import org.ferrit.core.test.FakeHttpClient._
-import org.ferrit.core.test.{ParrotHttpClient, LinkedListHttpClient}
-import org.ferrit.core.test.{MockRobotRulesCache, PartResponse}
-import org.ferrit.core.test.{ProxyActor}
+import org.ferrit.core.test.{LinkedListHttpClient, MockRobotRulesCache, ParrotHttpClient, ProxyActor}
+import org.ferrit.core.uri.{CrawlUri, InMemoryFrontier, InMemoryUriCache, UriReader}
+import org.ferrit.core.util.{Media, UniqueId}
+import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.Random
 
 
 class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
@@ -30,35 +27,27 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
   implicit val system = ActorSystem("test")
 
   implicit val execContext = system.dispatcher
+  val html = """
+               |<!doctype html>
+               |<html>
+               |<head><title>Page Title</title>
+               |<!-- insert css link -->
+               |  %s
+               |</head>
+               |<body>
+               |<!-- insert body content -->
+               |  %s
+               |</body>
+               |</html>
+             """.stripMargin
+  val css =
+    """#item { background: url('%s') }"""
 
   override def afterAll():Unit = system.shutdown()
 
-  class CrawlTest extends TestKit(system) with ImplicitSender {
-
-    /**
-     * The CrawlWorker is intended to be a child of CrawlerManager
-     * with all communication to it mediated through the CrawlerManager.
-     * Therefore we create a proxy parent for the CrawlWorker and talk 
-     * to the crawler through the proxy.
-     * 
-     * Another reason for using this proxy:
-     * It is possible to create a CrawlWorker using system.actorOf(...),
-     * but messages sent by the CrawlWorker to it's
-     * parent (which it thinks is the CrawlerManager) are not handled 
-     * by the guardian actor and end up logged as dead letters.
-     */
-    def makeCrawlerProxy(crawlerProps: Props):ActorRef = {
-      val realParent = testActor // i.e. this TestKit
-      system.actorOf(
-        Props(classOf[ProxyActor], realParent, crawlerProps, mkCrawlerName)
-      )
-    }
-
-  }
-
   /**
    * To help debug test failures, a debug logger can be registered with
-   * the Crawler that will then log the internal activitiy. 
+   * the Crawler that will then log the internal activitiy.
    * For example, just add this line before running crawler:
    *
    *   proxy !Listen(logger)
@@ -70,62 +59,65 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
 
   def makeRobotRulesCache(cache: RobotRulesCache) =
     system.actorOf(Props(classOf[RobotRulesCacheActor], cache))
-  
 
-  val html = """
-        |<!doctype html>
-        |<html>
-        |<head><title>Page Title</title>
-        |<!-- insert css link -->
-        |  %s
-        |</head>
-        |<body>
-        |<!-- insert body content -->
-        |  %s
-        |</body>
-        |</html>
-        """.stripMargin
-    val css = 
-        """#item { background: url('%s') }"""
-
-  /** 
+  /**
    * Each crawler Actor requires a different name else Akka complains.
    * Underlying reason is that test actors may still exist for some time after a
    * test has completed and names collide with the Actor in the next test.
    */
   def mkCrawlerName = "crawler-" + System.currentTimeMillis + "-" + Random.nextInt(100)
 
-  def seedsFor(uri: String) = Seq(CrawlUri(uri))
-  def uriFilterFor(uri: String) = new FirstMatchUriFilter(Seq(Accept(uri.r)))
-
   /**
    * Generic config used by all tests, customisable by making a copy
    */
   def makeConfig(uri: String) = CrawlConfig(
-      id = UniqueId.next,
-      userAgent = Some("Test Agent"),
-      crawlerName = "Test Crawler " + scala.util.Random.nextInt(10000),
-      seeds = seedsFor(uri),
-      uriFilter = uriFilterFor(uri),
-      tests = Some(Seq(s"accept: $uri")),
-      crawlDelayMillis = 0,
-      crawlTimeoutMillis = 10000,
-      maxDepth = Int.MaxValue,
-      maxFetches = 10000,
-      maxQueueSize = 10000,
-      maxRequestFails = 0.5
-    )
+    id = UniqueId.next,
+    userAgent = Some("Test Agent"),
+    crawlerName = "Test Crawler " + scala.util.Random.nextInt(10000),
+    seeds = seedsFor(uri),
+    uriFilter = uriFilterFor(uri),
+    tests = Some(Seq(s"accept: $uri")),
+    crawlDelayMillis = 0,
+    crawlTimeoutMillis = 10000,
+    maxDepth = Int.MaxValue,
+    maxFetches = 10000,
+    maxQueueSize = 10000,
+    maxRequestFails = 0.5
+  )
+
+  def seedsFor(uri: String) = Seq(CrawlUri(uri))
+
+  def uriFilterFor(uri: String) = new FirstMatchUriFilter(Seq(Accept(uri.r)))
 
   def makeJob(config: CrawlConfig) = CrawlJob.create(config, "localhost")
 
+  class CrawlTest extends TestKit(system) with ImplicitSender {
+
+    /**
+     * The CrawlWorker is intended to be a child of CrawlerManager
+     * with all communication to it mediated through the CrawlerManager.
+     * Therefore we create a proxy parent for the CrawlWorker and talk
+     * to the crawler through the proxy.
+     *
+     * Another reason for using this proxy:
+     * It is possible to create a CrawlWorker using system.actorOf(...),
+     * but messages sent by the CrawlWorker to it's
+     * parent (which it thinks is the CrawlerManager) are not handled
+     * by the guardian actor and end up logged as dead letters.
+     */
+    def makeCrawlerProxy(crawlerProps: Props): ActorRef = {
+      val realParent = testActor // i.e. this TestKit
+      system.actorOf(
+        Props(classOf[ProxyActor], realParent, crawlerProps, mkCrawlerName)
+      )
+    }
+
+  }
 
   behavior of "CrawlWorker" 
 
-
   it should "start and then stop by itself normally" in new CrawlTest {
-  
     val config = makeConfig("http://site.net")
-
     val proxy = makeCrawlerProxy(Props(
       classOf[CrawlWorker], 
       makeJob(config),
@@ -144,15 +136,12 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
       case Stopped(CompletedOkay, job) => true
       case _ => false
     }
-    
   }
 
 
   it should "respond to Stop request" in new CrawlTest {
-
     val site = "http://site.net"
     val config = makeConfig(site)
-
     val proxy = makeCrawlerProxy(Props(
       classOf[CrawlWorker], 
       makeJob(config),
@@ -176,12 +165,9 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
       case Stopped(StopRequested, job) => true
       case _ => false
     }
-
   }
 
-
   it should "crawl and find links in pages" in new CrawlTest {
-    
     val site = "http://site.net"
     val responses = Map(
       s"$site" -> 
@@ -238,14 +224,13 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
             "404" -> 2 // page3.html + png
           ),
           Map(
-            "text/html; charset=UTF-8" -> Media(3, 783),
+            "text/html; charset=UTF-8" -> Media(3, 744),
             "text/css; charset=UTF-8" -> Media(1, 42)
           )
         ))
         true
       case _ => false
     }
-    
   }
 
   it should "ignore links containing unsupported schemes" in new CrawlTest {
@@ -319,7 +304,7 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
             "200" -> totalPages
           ),
           Map(
-            "text/html; charset=UTF-8" -> Media(totalPages, 224730)
+            "text/html; charset=UTF-8" -> Media(totalPages, 212730)
           )
         ))
         true
@@ -496,7 +481,7 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
             "200" -> found
           ),
           Map(
-            "text/html; charset=UTF-8" -> Media(found, 884)
+            "text/html; charset=UTF-8" -> Media(found, 836)
           )
         ))
         true
@@ -577,7 +562,7 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
               "200" -> found
             ),
             Map(
-              "text/html; charset=UTF-8" -> Media(found, 980)
+              "text/html; charset=UTF-8" -> Media(found, 920)
             )
         ))
         true
@@ -735,7 +720,6 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
 
   }
 
-  
   class FailedCrawl extends CrawlTest {
 
     def testFailingCrawler(config: CrawlConfig, expectedMsg: String) = {
@@ -756,7 +740,7 @@ class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAl
       proxy ! Run
 
       fishForMessage(1.second) {
-        case StartFailed(CrawlRejectException(msg), _) if (expectedMsg == msg) => true
+        case StartFailed(CrawlRejectException(msg), _) if expectedMsg == msg => true
         case _ => false
       }
     }

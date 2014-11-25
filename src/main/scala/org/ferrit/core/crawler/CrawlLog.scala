@@ -1,8 +1,7 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Props, Actor, Terminated}
+import akka.actor.{Actor, Props, Terminated}
 import akka.event.Logging
-import com.typesafe.config.Config
 import org.ferrit.core.crawler.CrawlWorker._
 import org.ferrit.core.crawler.FetchMessages._
 import org.ferrit.core.model.CrawlJob
@@ -58,27 +57,98 @@ class CrawlLog extends Actor {
 
   }
 
-  def receiveFetchUpdate:Receive = {
-    
+  def stop() = context.stop(self)
+
+  def logMsg(msg: String) = log.info(msg)
+
+  def crawlJobToLines(job: CrawlJob): Seq[String] = {
+
+    val fc = job.fetchCounters
+    val mc = job.mediaCounters
+    val rc = job.responseCounters
+
+    val duration = new Duration(job.createdDate, job.finishedDate.get)
+    val totalFiles = fc.getOrElse(FetchSucceeds, 0)
+    val avgFetchTime = new Duration(duration.getMillis / Math.max(totalFiles, 1))
+    val allBytes = mc.map(pair => pair._2.totalBytes).sum
+
+    val w = 80
+    val hw = w / 2
+
+    val outcome = job.outcome.getOrElse("Unknown")
+    val message = job.message.getOrElse("No Message")
+
+    val lines = List(
+
+      List(
+        "",
+        line("-", w),
+        " CRAWL FINISHED",
+        line("=", w),
+        "",
+        lcell("Crawler name:", 16, " ") + "[" + job.crawlerName + "]",
+        lcell("Stop time:", 16, " ") + "[" + new DateTime + "]",
+        lcell("Crawl outcome:", 16, " ") + s"[$outcome, $message]",
+        "",
+        lcell("Duration: ", hw, ".") + rcell(" " + formatElapsedTime(duration.getMillis), hw, "."),
+        lcell("Avg fetch time: ", hw, ".") + rcell(" " + formatElapsedTime(avgFetchTime.getMillis), hw, "."),
+        lcell("Files fetched: ", hw, ".") + rcell(" " + totalFiles, hw, "."),
+        lcell("Total content: ", hw, ".") + rcell(" " + formatBytes(allBytes), hw, "."),
+        lcell("Redirects: ", hw, ".") + rcell(" " + fc.getOrElse(FetchRedirects, 0), hw, "."),
+        lcell("Failed fetches: ", hw, ".") + rcell(" " + fc.getOrElse(FetchFails, 0), hw, ".")
+      ),
+
+      List("", "Total by content type:", ""),
+
+      mc.keys.toSeq.sorted.map({ contentType =>
+        mc.get(contentType) match {
+          case Some(media) =>
+            val fbytes = formatBytes(media.totalBytes)
+            rcell("" + media.count, 8, " ") + rcell("" + fbytes, 14, " ") + "    " + contentType
+          case None => ""
+        }
+      }),
+
+      List("", "Total by response code:", ""),
+
+      rc.map({ pair =>
+        rcell("" + pair._2, 8, " ") + rcell("HTTP " + pair._1, 14, " ")
+      }),
+
+      List(
+        "",
+        line("=", 80),
+        ""
+      )
+    )
+
+    lines.flatten
+  }
+
+
+  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+  def receiveFetchUpdate: Receive = {
+
     // This set of messages occur once per resource crawled
 
     // A highly verbose message because it is emitted for every link
     // found in a resource, many of which will not be crawled.
-    case FetchDecision(uri, decision) => 
+    case FetchDecision(uri, decision) =>
       if (debug) logMsg(s"$decision [$uri]")
 
     case FetchQueued(f) =>
       if (debug) logMsg(s"Queued [${f.uri}] depth=${f.depth}")
-    
+
     case FetchScheduled(f, delayMs) =>
       if (debug) logMsg(s"Fetching in [${delayMs}ms] [${f.uri}]")
 
-    case FetchGo(f) => 
+    case FetchGo(f) =>
       if (debug) logMsg(s"Now fetching [${f.uri}]")
 
-    case FetchResponse(uri, statusCode) => 
+    case FetchResponse(uri, statusCode) =>
       if (debug) logMsg(s"HTTP [$statusCode] for [$uri]")
-    
+
     case DepthLimit(f) =>
       if (debug) logMsg(s"Depth limit ${f.depth} for [${f.uri}]")
 
@@ -98,88 +168,17 @@ class CrawlLog extends Actor {
 
   }
 
-  def receiveOther:Receive = {
+  def receiveOther: Receive = {
 
     case Terminated(_) => // Won't be received until death watch setup
 
     case msg => log.info(s"Unknown message: $msg")
 
-  }  
-
-  def stop = context.stop(self)
-
-
-  /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-  def logMsg(msg: String) = log.info(msg)
-
-  def crawlJobToLines(job: CrawlJob):Seq[String] = {
-
-    val fc = job.fetchCounters
-    val mc = job.mediaCounters
-    val rc = job.responseCounters
-    
-    val duration = new Duration(job.createdDate, job.finishedDate.get)
-    val totalFiles = fc.getOrElse(FetchSucceeds, 0)
-    val avgFetchTime = new Duration(duration.getMillis / Math.max(totalFiles, 1))
-    val allBytes = mc.map(pair => pair._2.totalBytes).sum
-    
-    val w = 80
-    val hw = w / 2
-
-    val outcome = job.outcome.getOrElse("Unknown")
-    val message = job.message.getOrElse("No Message")
-
-    val lines = List(
-
-      List(
-        "",
-        line("-", w),
-        " CRAWL FINISHED",
-        line("=", w),
-        "",
-        lcell("Crawler name:", 16," ") + "[" + job.crawlerName + "]",
-        lcell("Stop time:", 16," ") + "[" + new DateTime + "]",
-        lcell("Crawl outcome:", 16," ") + s"[$outcome, $message]",
-        "",
-        lcell("Duration: ", hw, ".") + rcell(" " + formatElapsedTime(duration.getMillis), hw, "."),
-        lcell("Avg fetch time: ", hw, ".") + rcell(" " + formatElapsedTime(avgFetchTime.getMillis), hw, "."),
-        lcell("Files fetched: ", hw, ".")        + rcell(" " + totalFiles, hw, "."),
-        lcell("Total content: ", hw, ".")        + rcell(" " + formatBytes(allBytes), hw, "."),
-        lcell("Redirects: ", hw, ".")         + rcell(" " + fc.getOrElse(FetchRedirects, 0), hw, "."),
-        lcell("Failed fetches: ", hw, ".")       + rcell(" " + fc.getOrElse(FetchFails, 0), hw, ".")
-      ),
-      
-      List("", "Total by content type:", ""),
-
-      mc.keys.toSeq.sorted.map({contentType =>
-        mc.get(contentType) match {
-          case Some(media) =>
-            val fbytes = formatBytes(media.totalBytes)
-            rcell("" + media.count, 8, " ") + rcell("" + fbytes, 14, " ") + "    " + contentType
-          case None => ""
-        }
-      }),
-      
-      List("", "Total by response code:", ""),
-
-      rc.map({pair =>
-        rcell("" + pair._2, 8, " ") + rcell("HTTP " + pair._1, 14, " ")
-      }),
-
-      List(
-        "",
-        line("=", 80),
-        ""
-      )
-    )
-
-    lines.flatten
   }
 
 }
 
 object CrawlLog {
-  def props(config: Config): Props = Props(classOf[CrawlLog])
+  def props(): Props = Props(classOf[CrawlLog])
 
 }

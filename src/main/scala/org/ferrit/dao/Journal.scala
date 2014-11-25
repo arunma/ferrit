@@ -1,12 +1,13 @@
 package org.ferrit.dao
 
+import akka.actor.Actor
+import org.ferrit.core.crawler.CrawlWorker._
+import org.ferrit.core.crawler.FetchMessages._
+import org.ferrit.core.model.{CrawlJob, Document, DocumentMetaData, FetchLogEntry}
+import org.joda.time.DateTime
+
 import scala.collection.mutable.{Map => MutableMap}
 import scala.concurrent.duration._
-import akka.actor.Actor
-import org.joda.time.DateTime
-import org.ferrit.core.crawler.FetchMessages._
-import org.ferrit.core.crawler.CrawlWorker._
-import org.ferrit.core.model.{CrawlJob, Document, DocumentMetaData, FetchLogEntry}
 
 
 /**
@@ -19,25 +20,21 @@ import org.ferrit.core.model.{CrawlJob, Document, DocumentMetaData, FetchLogEntr
  */
 class Journal(daoFactory: DAOFactory) extends Actor {
 
-  import Journal.FlushJobState
-  private [dao] implicit val execContext = context.system.dispatcher
-  
+  import org.ferrit.dao.Journal.FlushJobState
   val jobDao: CrawlJobDAO = daoFactory.crawlJobDao
   val fleDao: FetchLogEntryDAO = daoFactory.fetchLogEntryDao
   val docMetaDao: DocumentMetaDataDAO = daoFactory.documentMetaDataDao
   val docDao: DocumentDAO = daoFactory.documentDao
-
   /**
-   * Flush job states every N seconds rather than 
+   * Flush job states every N seconds rather than
    * after each fetch too reduce excessive writes.
    */
   val FlushDelay = 10
+  private[dao] implicit val execContext = context.system.dispatcher
   var jobStates: Map[String, CrawlJob] = Map.empty
 
-  
   def receive = {
-
-    case StartOkay(_, job) => 
+    case StartOkay(_, job) =>
       jobDao.insertByCrawler(Seq(job))
       jobDao.insertByDate(Seq(job))
 
@@ -48,7 +45,7 @@ class Journal(daoFactory: DAOFactory) extends Actor {
       jobStates = jobStates - job.jobId
 
     case FlushJobState =>
-      if (!jobStates.isEmpty) {
+      if (jobStates.nonEmpty) {
         // PERFORMANCE ALERT
         // Frequent updates to these job tables will result
         // in degraded read performance over time
@@ -59,7 +56,6 @@ class Journal(daoFactory: DAOFactory) extends Actor {
       }
 
     case FetchResult(statusCode, fetchJob, crawlJob, response, overallDuration, parserResult) =>
-      
       val linksExtracted = parserResult match {
         case Some(pr) => pr.links.size
         case None => 0
@@ -71,11 +67,8 @@ class Journal(daoFactory: DAOFactory) extends Actor {
       }
 
       val now = new DateTime
-      val node = "localhost"
-      val dayBucket = new DateTime().withTimeAtStartOfDay
       val uri = fetchJob.uri
       val contentType = response.contentType.getOrElse("undefined")
-
       val docMeta = DocumentMetaData(
         crawlJob.crawlerId,
         crawlJob.jobId,
@@ -84,7 +77,7 @@ class Journal(daoFactory: DAOFactory) extends Actor {
         response.contentLength,
         fetchJob.depth,
         now,
-        "" + response.statusCode
+        response.statusCode.toString
       )
       docMetaDao.insert(docMeta)
 
@@ -123,19 +116,14 @@ class Journal(daoFactory: DAOFactory) extends Actor {
       // By the time it runs there will be job states captured.
       // This depends on jobStates being reset after each flush
 
-      if (jobStates.isEmpty) {
-        context.system.scheduler.scheduleOnce(
-          FlushDelay.seconds, self, FlushJobState
-        )
-      }
-      jobStates = jobStates + (crawlJob.jobId -> crawlJob)
-       
-  }
+      if (jobStates.isEmpty) context.system.scheduler.scheduleOnce(
+        FlushDelay.seconds, self, FlushJobState
+      )
 
+      jobStates = jobStates + (crawlJob.jobId -> crawlJob)
+  }
 }
 
 object Journal {
-  
   case object FlushJobState
-
 }
