@@ -1,8 +1,9 @@
 package org.ferrit.core.filter
 
-import scala.util.matching.Regex
-import org.ferrit.core.uri.CrawlUri
 import org.ferrit.core.filter.FirstMatchUriFilter._
+import org.ferrit.core.uri.CrawlUri
+
+import scala.util.matching.Regex
 
 /**
  * A UriFilter strategy that accepts or rejects a URI based on the 
@@ -12,7 +13,6 @@ import org.ferrit.core.filter.FirstMatchUriFilter._
  *
  */
 class FirstMatchUriFilter(val rules: Seq[Rule]) extends UriFilter {
-
   override def accept(uri: CrawlUri): Boolean = test(uri).accepted
 
   override def explain(uri: CrawlUri): String =
@@ -22,14 +22,9 @@ class FirstMatchUriFilter(val rules: Seq[Rule]) extends UriFilter {
       case None => RejectDefaultMsg.format(uri)
     }
 
-  def test(uri: CrawlUri):Result = {
-    val curi = uri.crawlableUri
-    val result = rules.find(r => r.regex.findPrefixMatchOf(curi).nonEmpty)
-    val accepted = result match {
-      case Some(r: Rule) => r.accept
-      case None => false // false to prevent unbounded crawls
-    }
-    Result(accepted, result)
+  def test(uri: CrawlUri): Result = {
+    val result = rules.find(r => r.regex.findPrefixMatchOf(uri.crawlableUri).nonEmpty)
+    Result(result.nonEmpty && result.get.accept, result)
   }
 
   override def toString: String = 
@@ -38,21 +33,21 @@ class FirstMatchUriFilter(val rules: Seq[Rule]) extends UriFilter {
 }
 
 object FirstMatchUriFilter {
-  
+  val AcceptMsg: String =
+    "The URI [%s] is accepted by pattern [%s]"
+  val RejectMsg: String =
+    "The URI [%s] is rejected by pattern [%s]"
+  val RejectDefaultMsg: String =
+    "The URI [%s] is rejected because no accept pattern accepted it"
+
   sealed abstract class Rule(val regex: Regex, val accept: Boolean) {
     def name:String = getClass.getSimpleName.toLowerCase
   }
-  case class Accept(r: Regex) extends Rule(r, true)
-  case class Reject(r: Regex) extends Rule(r, false)
+
   sealed case class Result(accepted: Boolean, matchedRule: Option[Rule])
 
-  val AcceptMsg:String = 
-    "The URI [%s] is accepted by pattern [%s]"
+  case class Accept(r: Regex) extends Rule(r, true)
 
-  val RejectMsg:String = 
-    "The URI [%s] is rejected by pattern [%s]"
-
-  val RejectDefaultMsg:String = 
-    "The URI [%s] is rejected because no accept pattern accepted it"
+  case class Reject(r: Regex) extends Rule(r, false)
 
 }

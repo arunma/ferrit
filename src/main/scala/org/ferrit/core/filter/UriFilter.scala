@@ -29,7 +29,7 @@ object UriFilter {
    * Sugar to reduce boilerplate conversions of String to CrawlUri,
    * in particular during tests.
    */
-  implicit def implicitConvertStringToCrawlUri(uri: String):CrawlUri = CrawlUri(uri)
+  implicit def implicitConvertStringToCrawlUri(uri: String): CrawlUri = CrawlUri(uri)
 
 }
 
