@@ -11,14 +11,14 @@ import org.ferrit.core.uri.UriReader
  */
 class RobotRulesCacheActor(cache: RobotRulesCache) extends Actor {
 
-  import RobotRulesCacheActor._
+  import org.ferrit.core.robot.RobotRulesCacheActor._
+
   implicit val execContext = context.system.dispatcher
 
   override def receive = {
     case Allow(ua, reader) => cache.allow(ua, reader).pipeTo(sender)
     case DelayFor(ua, reader) => cache.getDelayFor(ua, reader).pipeTo(sender)
   }
-
 }
 
 object RobotRulesCacheActor {

@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import org.ferrit.dao.DAOFactory
 
 class CassandraDAOFactory(ttl: CassandraColumnTTL, session: Session) extends DAOFactory {
+  private[dao] implicit val _session = session
 
   override val crawlerDao = new CassandraCrawlerDAO(ttl)
 
@@ -14,10 +15,12 @@ class CassandraDAOFactory(ttl: CassandraColumnTTL, session: Session) extends DAO
   // is required to create prepared statements which first requires
   // a DAO instance.
   override val crawlJobDao = new CassandraCrawlJobDAO(ttl)
+
   override val fetchLogEntryDao = new CassandraFetchLogEntryDAO(ttl)
+
   override val documentMetaDataDao = new CassandraDocumentMetaDataDAO(ttl)
+
   override val documentDao = new CassandraDocumentDAO(ttl)
-  private[dao] implicit val _session = session
 
   def this(cc: CassandraPersistenceManager, config: Config) {
     this(cc.getColumnTTL(config), cc.session)

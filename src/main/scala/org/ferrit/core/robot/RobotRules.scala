@@ -33,9 +33,8 @@ case class RobotRules(
    *               E.g. for a URI "http://site.com/path1/page1",
    *               pass in just the "/page1" segment.
    */
-  def allow(uriPath: String):Boolean = {
-    
-    val cleanPath = 
+  def allow(uriPath: String): Boolean = {
+    val cleanPath =
       if (uriPath.trim.isEmpty) "/" 
       else RobotRulesParser.clean(uriPath)
 
@@ -49,5 +48,4 @@ case class RobotRules(
         }
     }
   }
-
 }

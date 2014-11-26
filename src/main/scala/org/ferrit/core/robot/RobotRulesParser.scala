@@ -41,7 +41,6 @@ import scala.util.matching.Regex
 *          (crawlercommons.robots.SimpleRobotRulesParser)
  */
 class RobotRulesParser {
-
   import org.ferrit.core.robot.RobotRulesParser._
 
   /**
@@ -51,8 +50,7 @@ class RobotRulesParser {
    *                    name as this user agent.
    * @param fileContent - the file retrieved from the server
    */
-  def parse(userAgent: String, fileContent: String):RobotRules = {
-    
+  def parse(userAgent: String, fileContent: String): RobotRules = {
     val allows = new ListBuffer[String]
     val disallows = new ListBuffer[String]
     val sitemaps = new ListBuffer[String]
@@ -102,22 +100,20 @@ class RobotRulesParser {
 }
 
 object RobotRulesParser {
-  
   val LineParser: Regex = {
     val Directives = "Allow|Crawl-delay|Disallow|Host|Sitemap|User-agent"
     val value = """\s*([^\s]*)\s*.*"""
     s"(?i)($Directives)\\s*:$value".r
   }
 
-  def parseLine(text: String):Option[(String,String)] = 
+  def parseLine(text: String): Option[(String, String)] =
     for {
       LineParser(key, value) <- LineParser.findFirstIn(text)
     } yield (key, value)
 
-  def clean(line: String):String =
+  def clean(line: String): String =
     line
       .trim
       .toLowerCase
       .replaceAll("%7e", "~") // after lower casing
-
 }

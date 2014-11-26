@@ -9,7 +9,6 @@ import org.joda.time.DateTime
 import scala.collection.mutable.{Map => MutableMap}
 import scala.concurrent.duration._
 
-
 /**
  * This actor receives updates from the CrawlWorker and persists
  * documents, meta data documents and fetch log entries.
