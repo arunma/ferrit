@@ -1,9 +1,8 @@
 package org.ferrit.core.model
 
-import org.joda.time.DateTime
 import org.ferrit.core.crawler.CrawlConfig
-import org.ferrit.core.util.{UniqueId, Media}
-
+import org.ferrit.core.util.{Media, UniqueId}
+import org.joda.time.DateTime
 
 sealed case class CrawlJob(
   crawlerId: String,
@@ -25,11 +24,9 @@ sealed case class CrawlJob(
 ) {
   
   def isFinished: Boolean = finishedDate.nonEmpty
-
 }
 
 object CrawlJob {
-  
   def create(config: CrawlConfig, node: String) = CrawlJob(
     crawlerId = config.id,
     crawlerName = config.crawlerName,
@@ -48,5 +45,4 @@ object CrawlJob {
     responseCounters = Map.empty,
     mediaCounters = Map.empty
   )
-
 }

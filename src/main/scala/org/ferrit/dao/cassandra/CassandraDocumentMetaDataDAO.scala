@@ -1,16 +1,12 @@
 package org.ferrit.dao.cassandra
 
-import java.util.Date
-import org.joda.time.DateTime
-import com.datastax.driver.core.{Session, PreparedStatement}
-import com.datastax.driver.core.{BoundStatement, ResultSet, Row}
+import com.datastax.driver.core.{BoundStatement, PreparedStatement, Row, Session}
+import org.ferrit.core.model.DocumentMetaData
 import org.ferrit.dao.DocumentMetaDataDAO
 import org.ferrit.dao.cassandra.CassandraDAO._
-import org.ferrit.core.model.DocumentMetaData
 
 
 class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Session) extends DocumentMetaDataDAO {
-  
   val timeToLive = ttl.get(CassandraTables.DocumentMetaData)
 
   val stmtInsert: PreparedStatement = session.prepare(
@@ -28,31 +24,27 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
   )
 
   def insert(docMeta: DocumentMetaData):Unit = {
-    val bs: BoundStatement = bindFromEntity(stmtInsert.bind(), docMeta)
-    session.execute(bs)
-  }  
-  
-  def find(jobId: String, uri: String):Option[DocumentMetaData] = {
-    val bs: BoundStatement = stmtFindByJobAndUri.bind()
-                            .setString("job_id", jobId)
-                            .setString("uri", uri)
-    val rs: ResultSet = session.execute(bs)
+    session.execute(bindFromEntity(stmtInsert.bind(), docMeta))
+  }
+
+  private[dao] def bindFromEntity(bs: BoundStatement, a: DocumentMetaData): BoundStatement = bs.bind()
+      .setString("crawler_id", a.crawlerId)
+      .setString("job_id", a.jobId)
+      .setString("uri", a.uri)
+      .setString("content_type", a.contentType)
+      .setInt("content_length", a.contentLength)
+      .setInt("depth", a.depth)
+      .setDate("fetched", a.fetched)
+      .setString("response_status", a.responseStatus)
+
+  def find(jobId: String, uri: String): Option[DocumentMetaData] = {
+    val rs = session.execute(stmtFindByJobAndUri.bind()
+        .setString("job_id", jobId)
+        .setString("uri", uri))
     mapOne(rs) {row => rowToEntity(row)}
   }
 
-  def find(jobId: String):Seq[DocumentMetaData] = {
-    val bs: BoundStatement = stmtFindByJob.bind().setString("job_id", jobId)                  
-    val rs: ResultSet = session.execute(bs)
-    val docs = mapAll(rs) {
-      row => rowToEntity(row)
-    }
-    docs.sortWith((d1, d2) => {
-      if (d1.depth != d2.depth) d1.depth < d2.depth
-      else d1.fetched.before(d2.fetched) //d1.uri < d2.uri
-    })
-  }
-
-  private [dao] def rowToEntity(row: Row):DocumentMetaData = {
+  private[dao] def rowToEntity(row: Row): DocumentMetaData = {
     DocumentMetaData(
       row.getString("crawler_id"),
       row.getString("job_id"),
@@ -65,16 +57,14 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
     )   
   }
 
-  private [dao] def bindFromEntity(bs: BoundStatement, a: DocumentMetaData):BoundStatement = {
-    bs.bind()
-      .setString("crawler_id", a.crawlerId)
-      .setString("job_id", a.jobId)
-      .setString("uri", a.uri)
-      .setString("content_type", a.contentType)
-      .setInt("content_length", a.contentLength)
-      .setInt("depth", a.depth)
-      .setDate("fetched", a.fetched)
-      .setString("response_status", a.responseStatus)
-  }
+  def find(jobId: String): Seq[DocumentMetaData] = {
+    val docs = mapAll(session.execute(stmtFindByJob.bind().setString("job_id", jobId))) {
+      row => rowToEntity(row)
+    }
 
+    docs.sortWith((d1, d2) => {
+      if (d1.depth != d2.depth) d1.depth < d2.depth
+      else d1.fetched.before(d2.fetched) //d1.uri < d2.uri
+    })
+  }
 }

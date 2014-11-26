@@ -4,10 +4,9 @@ import com.datastax.driver.core.policies.Policies
 import com.datastax.driver.core.{Cluster, Session}
 import com.typesafe.config.Config
 
-
 class CassandraPersistenceManager(config: CassandraConfig) {
-  
   val cluster: Cluster = CassandraPersistenceManager.initCluster(config)
+
   val session: Session = cluster.connect(config.keyspace)
 
   def this(config: Config) {
@@ -24,7 +23,6 @@ class CassandraPersistenceManager(config: CassandraConfig) {
         t -> config.getInt(s"persistence.cassandra.tableColumnTTL.$t")
       }).toMap
     )
-  
 }
 
 object CassandraPersistenceManager {
@@ -32,17 +30,15 @@ object CassandraPersistenceManager {
   /**
    * Best to have this in an object, can be used in tests as well.
    */
-  def initCluster(config: CassandraConfig):Cluster = 
+  def initCluster(config: CassandraConfig): Cluster =
     Cluster.builder()
       .addContactPoints(config.nodes.toArray: _*)
       .withPort(config.port)
       .withRetryPolicy(Policies.defaultRetryPolicy())
       .build()
-
 }
 
 object CassandraTables {
-  
   val Crawler = "crawler"
   val CrawlJobByCrawler = "crawl_job_by_crawler"
   val CrawlJobByDate = "crawl_job_by_date"
@@ -58,7 +54,6 @@ object CassandraTables {
     Document,
     DocumentMetaData
   )
-
 }
 
 case class CassandraConfig(
