@@ -14,7 +14,7 @@ class CassandraPersistenceManager(config: CassandraConfig) {
   }
 
   def shutdown():Unit = {
-    cluster.shutdown()
+//    cluster.close()
   }
 
   def getColumnTTL(config: Config):CassandraColumnTTL =   

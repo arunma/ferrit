@@ -43,7 +43,7 @@ libraryDependencies ++= {
     "org.jsoup" % "jsoup" % "1.7.3",
     "joda-time" % "joda-time" % "2.2",
     "org.joda" % "joda-convert" % "1.2",
-    "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.0-rc2",
+    "com.datastax.cassandra" % "cassandra-driver-core" % "2.1.2",
     "net.jpountz.lz4" % "lz4" % "1.2.0"
   )
 }

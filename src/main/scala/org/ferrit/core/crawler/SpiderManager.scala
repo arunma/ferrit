@@ -118,7 +118,7 @@ object SpiderManager {
     Props(classOf[SpiderManager],
       config.getString("app.server.host"),
       config.getString("app.crawler.user-agent"),
-      config.getString("app.crawler.max-crawlers"),
+      config.getInt("app.crawler.max-crawlers"),
       spiderClient,
       robotsRuleCache)
   }

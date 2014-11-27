@@ -44,11 +44,6 @@ object Ferrit extends App with SimpleRoutingApp {
       }
   }
 
-  startServer(
-    interface = config.getString("app.server.host"),
-    port = config.getInt("app.server.port")) {
-    routes
-  }
   val spiderContext = new ProdSpiderContext
   val config = spiderContext.config
   val spiderManager = spiderContext.spiderManager
@@ -228,6 +223,12 @@ object Ferrit extends App with SimpleRoutingApp {
       case None => reject(BadEntityRejection("crawl job", crawlJobId))
       case Some(crawlJob) => provide(crawlJob)
     }
+  }
+
+  startServer(
+    interface = config.getString("app.server.host"),
+    port = config.getInt("app.server.port")) {
+    routes
   }
 }
 
