@@ -14,7 +14,7 @@ trait ParserResult {
    * but may also be extracted from &lt;script&gt; and &lt;style&gt; etc.
    *
    * If the resource is a CSS file then links may be found in
-   * the CSS import url('...'') directive.
+   * the CSS import url('...') directive.
    */  
   def links: Set[Link]
 

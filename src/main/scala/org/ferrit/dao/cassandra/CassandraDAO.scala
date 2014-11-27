@@ -24,7 +24,7 @@ object CassandraDAO {
   def mapAll[T](rs: ResultSet)(fn: Row => T): Seq[T] = {
     val iter = rs.iterator()
     val items = new scala.collection.mutable.ListBuffer[T]
-    while (iter.hasNext()) {
+    while (iter.hasNext) {
       items.append(fn(iter.next()))
     }
 

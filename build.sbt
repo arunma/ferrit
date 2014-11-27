@@ -51,7 +51,7 @@ libraryDependencies ++= {
 
 // ---------------- Revolver Settings ----------------
 
-seq(Revolver.settings: _*)
+Seq(Revolver.settings: _*)
 
 javaOptions in Revolver.reStart += "-Xmx1g"
 

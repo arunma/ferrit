@@ -50,6 +50,15 @@ object Ferrit extends App with SimpleRoutingApp {
   val daoFactory = spiderContext.daoFactory
   val crawlJobDao = daoFactory.crawlJobDao
   val crawlerDao = daoFactory.crawlerDao
+  val askTimeout = new Timeout(3.seconds)
+  val startJobTimeout = new Timeout(30.seconds)
+  val DateParamDefault = "no-date"
+  val DateParamFormat = "YYYY-MM-dd"
+  val NoPostToNamedCrawlerMsg = "Cannot post to an existing crawler resource"
+  val StopJobAcceptedMsg = "Stop request accepted for job [%s]"
+  val StopAllJobsAcceptedMsg = "Stop request accepted for %s jobs"
+  val ShutdownReceivedMsg = "Shutdown request received"
+
   val routes =
     path("crawlers" / Segment / "jobs" / Segment / "fetches") { (crawlerId, jobId) =>
       get {
@@ -181,18 +190,10 @@ object Ferrit extends App with SimpleRoutingApp {
             }
           }
         }
-  val askTimeout = new Timeout(3.seconds)
-  val startJobTimeout = new Timeout(30.seconds)
-  val DateParamDefault = "no-date"
-  val DateParamFormat = "YYYY-MM-dd"
-  val NoPostToNamedCrawlerMsg = "Cannot post to an existing crawler resource"
-  val StopJobAcceptedMsg = "Stop request accepted for job [%s]"
-  val StopAllJobsAcceptedMsg = "Stop request accepted for %s jobs"
-  val ShutdownReceivedMsg = "Shutdown request received"
 
   implicit def executionContext: ExecutionContextExecutor = actorRefFactory.dispatcher
 
-  implicit def customExceptionHandler(implicit log: LoggingContext) = ExceptionHandler {
+  implicit def customExceptionHandler(implicit log: LoggingContext): ExceptionHandler = ExceptionHandler {
     case throwable: Throwable =>
       requestInstance { request =>
         complete {

@@ -29,7 +29,7 @@ class TestDefaultRobotRulesCache extends FlatSpec with ShouldMatchers {
   
 
   trait MockClient extends HttpClient {
-    override def shutdown:Unit = ???
+    override def shutdown():Unit = { }
   }
 
   it should "determine crawl delay" in {

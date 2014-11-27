@@ -15,8 +15,7 @@ import spray.http.Uri
  * @see http://en.wikipedia.org/wiki/Percent-encoding#Types_of_URI_characters
  * @see https://groups.google.com/forum/#!topic/spray-user/8DFoFH4jEBo
  * @see https://github.com/spray/spray/issues/304
- * @see HtmlUnit {@link UrlResolver#resolveString(String, String)} 
- * @see http://code.google.com/p/crawler4j/source/browse/src/test/java/edu/uci/ics/crawler4j/tests/URLCanonicalizerTest.java
+ * @see HtmlUnit { @see http://code.google.com/p/crawler4j/source/browse/src/test/java/edu/uci/ics/crawler4j/tests/URLCanonicalizerTest.java
  *
  */
 class TestCrawlUri extends FlatSpec with ShouldMatchers {

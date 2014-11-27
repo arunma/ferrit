@@ -65,7 +65,7 @@ class NingAsyncHttpClient(config: HttpClientConfig) extends HttpClient {
     var start = now
 
     def onStatusReceived(status: HttpResponseStatus): STATE = {
-      statusCode = status.getStatusCode()
+      statusCode = status.getStatusCode
       timeStatus = now() - start
       STATE.CONTINUE // what if status code > = 500?
     }
@@ -78,7 +78,7 @@ class NingAsyncHttpClient(config: HttpClientConfig) extends HttpClient {
     }
 
     def onBodyPartReceived(bodyPart: HttpResponseBodyPart): STATE = {
-      val b: Array[Byte] = bodyPart.getBodyPartBytes()
+      val b: Array[Byte] = bodyPart.getBodyPartBytes
       length += b.length
       bytes.write(b)
       if (maxSizeExceeded) STATE.ABORT else STATE.CONTINUE
@@ -93,7 +93,7 @@ class NingAsyncHttpClient(config: HttpClientConfig) extends HttpClient {
           DefaultResponse(
             statusCode,
             headers,
-            bytes.toByteArray(),
+            bytes.toByteArray,
             Stats(timeStatus, timeHeaders, timeCompleted),
             request
           )
