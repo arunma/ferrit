@@ -1,6 +1,6 @@
 package org.ferrit.dao.cassandra
 
-import com.datastax.driver.core.{BoundStatement, PreparedStatement, Row, Session}
+import com.datastax.driver.core.{PreparedStatement, Row, Session}
 import org.ferrit.core.json.PlayJsonImplicits
 import org.ferrit.core.model.Crawler
 import org.ferrit.dao.CrawlerDAO
@@ -25,14 +25,12 @@ class CassandraCrawlerDAO(ttl: CassandraColumnTTL)(implicit session: Session) ex
   )
 
   override def insert(crawler: Crawler): Unit = {
-    session.execute(bindFromEntity(stmtInsert.bind(), crawler))
-  }
-
-  private[dao] def bindFromEntity(bs: BoundStatement, c: Crawler): BoundStatement = {
-    val json = Json.stringify(Json.toJson(c.config)(PlayJsonImplicits.crawlConfigWrites))
-    bs.bind()
-      .setString("crawler_id", c.crawlerId)
-      .setString("config_json", json)
+    val json = Json.stringify(Json.toJson(crawler.config)(PlayJsonImplicits.crawlConfigWrites))
+    session.execute {
+      stmtInsert.bind()
+          .setString("crawler_id", crawler.crawlerId)
+          .setString("config_json", json)
+    }
   }
 
   override def delete(crawlerId: String): Unit = {
@@ -40,21 +38,21 @@ class CassandraCrawlerDAO(ttl: CassandraColumnTTL)(implicit session: Session) ex
   }
 
   override def find(crawlerId: String): Option[Crawler] =
-    mapOne(session.execute(stmtFind.bind().setString("crawler_id", crawlerId))) {
-      row => rowToEntity(row)
-    }
+    mapOne {
+      session.execute(stmtFind.bind().setString("crawler_id", crawlerId))
+    } { rowToEntity }
 
   override def findAll(): Seq[Crawler] = {
-    val crawlers = mapAll(session.execute(stmtFindAll.bind())) {
-      row => rowToEntity(row)
-    }
+    val crawlers = mapAll {
+      session.execute(stmtFindAll.bind())
+    } { rowToEntity }
 
     crawlers.sortWith(
       (c1, c2) => c1.config.crawlerName.toLowerCase < c2.config.crawlerName.toLowerCase
     )
   }
 
-  private[dao] def rowToEntity(row: Row): Crawler = {
+  private def rowToEntity(row: Row) = {
     val json = row.getString("config_json")
     Json.fromJson(Json.parse(json))(PlayJsonImplicits.crawlConfigReads) match {
       case JsSuccess(config, path) => Crawler(row.getString("crawler_id"), config)

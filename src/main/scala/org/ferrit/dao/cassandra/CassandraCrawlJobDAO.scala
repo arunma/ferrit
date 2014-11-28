@@ -10,6 +10,7 @@ import org.joda.time.DateTime
 import scala.collection.JavaConverters._
 
 class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) extends CrawlJobDAO {
+
   import org.ferrit.dao.cassandra.CassandraTables.{CrawlJobByCrawler, CrawlJobByDate}
 
   val stmtInsertByCrawler: PreparedStatement = session.prepare(
@@ -52,7 +53,7 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
     session.execute(batch)
   }
 
-  private[dao] def bindFromEntity(bs: BoundStatement, c: CrawlJob): BoundStatement = {
+  private def bindFromEntity(bs: BoundStatement, c: CrawlJob) = {
     bs.bind()
         .setString("crawler_id", c.crawlerId)
         .setString("crawler_name", c.crawlerName)
@@ -74,21 +75,28 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
   }
 
   override def find(crawlerId: String, jobId: String): Option[CrawlJob] =
-    mapOne(session.execute(stmtFindByCrawlerJob.bind()
-        .setString("crawler_id", crawlerId)
-        .setString("job_id", jobId))) { row => rowToEntity(row)}
+    mapOne {
+      session.execute(stmtFindByCrawlerJob.bind()
+          .setString("crawler_id", crawlerId)
+          .setString("job_id", jobId))
+    } { rowToEntity }
 
   override def find(crawlerId: String): Seq[CrawlJob] = {
-    val jobs = mapAll(session.execute(stmtFindByCrawler.bind().setString("crawler_id", crawlerId))) {
-      row => rowToEntity(row)
-    }
+    val jobs = mapAll {
+      session.execute(stmtFindByCrawler.bind().setString("crawler_id", crawlerId))
+    } { rowToEntity }
 
     jobs.sortWith((j1, j2) => {
       j1.createdDate.after(j2.createdDate)
     })
   }
 
-  private [dao] def rowToEntity(row: Row):CrawlJob = {
+  override def find(partitionDate: DateTime): Seq[CrawlJob] =
+    mapAll {
+      session.execute(stmtFindByDate.bind().setDate("partition_date", partitionDate))
+    } { rowToEntity }
+
+  private def rowToEntity(row: Row) = {
     CrawlJob(
       row.getString("crawler_id"),
       row.getString("crawler_name"),
@@ -124,9 +132,4 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
       }
     )
   }
-
-  override def find(partitionDate: DateTime): Seq[CrawlJob] =
-    mapAll(session.execute(stmtFindByDate.bind().setDate("partition_date", partitionDate))) {
-      row => rowToEntity(row)
-    }
 }
