@@ -15,7 +15,6 @@ import org.joda.time.{DateTime, Duration}
  * know what the crawler is doing.
  */
 class CrawlLog extends Actor {
-  
   private [crawler] val log = Logging(context.system, getClass)
   private [crawler] val w = 80 // width of display
   private [crawler] val debug = false
@@ -25,11 +24,9 @@ class CrawlLog extends Actor {
     receiveFetchUpdate orElse 
     receiveOther
 
-
-  def receiveCrawlUpdate:Receive = {
+  def receiveCrawlUpdate: Receive = {
 
     // These messages occur once per crawl, at the beginning and end
-
     case StartOkay(msg, job) =>
         log.info("New crawl started: " + job.crawlerName)
     
@@ -54,7 +51,6 @@ class CrawlLog extends Actor {
     case Stopped(outcome, job) => 
       crawlJobToLines(job).foreach(log.info)
       stop
-
   }
 
   def stop() = context.stop(self)
@@ -62,7 +58,6 @@ class CrawlLog extends Actor {
   def logMsg(msg: String) = log.info(msg)
 
   def crawlJobToLines(job: CrawlJob): Seq[String] = {
-
     val fc = job.fetchCounters
     val mc = job.mediaCounters
     val rc = job.responseCounters
@@ -169,16 +164,11 @@ class CrawlLog extends Actor {
   }
 
   def receiveOther: Receive = {
-
     case Terminated(_) => // Won't be received until death watch setup
-
     case msg => log.info(s"Unknown message: $msg")
-
   }
-
 }
 
 object CrawlLog {
   def props(): Props = Props(classOf[CrawlLog])
-
 }

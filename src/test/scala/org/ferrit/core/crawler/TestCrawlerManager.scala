@@ -88,7 +88,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     manager ! StartJob(config, NoLogger)
     fishForMessage(1.second) { 
-      case JobStartFailed(CrawlRejectException(SpiderManager.crawlerExists)) => true
+      case JobStartFailed(CrawlRejectException(SpiderManager.CrawlerExists)) => true
     }
   }
 
@@ -108,7 +108,7 @@ class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfte
 
     manager ! StartJob(config2, NoLogger)
     fishForMessage(1.second) { 
-      case JobStartFailed(CrawlRejectException(SpiderManager.tooManyCrawlers)) => true
+      case JobStartFailed(CrawlRejectException(SpiderManager.TooManyCrawlers)) => true
     }
 
   }

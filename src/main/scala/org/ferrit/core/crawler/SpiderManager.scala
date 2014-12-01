@@ -26,16 +26,16 @@ class SpiderManager(
   httpClient: HttpClient,
   robotRulesCache: ActorRef
 ) extends Actor {
-
   import org.ferrit.core.crawler.SpiderManager._
+
+  private[crawler] implicit val execContext = context.system.dispatcher
+  private[crawler] val AskTimeout = new Timeout(1.second)
+  private[crawler] var jobs: Map[String, JobEntry] = Map.empty
 
   // Crawlers should not restart if they crash
   override val supervisorStrategy = OneForOneStrategy(0, 1.second) {
     case _: Exception => Stop
   }
-  private[crawler] implicit val execContext = context.system.dispatcher
-  private[crawler] val askTimeout = new Timeout(1.second)
-  private[crawler] var jobs: Map[String, JobEntry] = Map.empty
 
   override def receive = messagesFromClients orElse messagesFromWorkers
 
@@ -45,9 +45,9 @@ class SpiderManager(
 
     case StartJob(config, listeners) =>
       if (jobs.size >= maxCrawlers) {
-        sender ! JobStartFailed(new CrawlRejectException(tooManyCrawlers))
+        sender ! JobStartFailed(new CrawlRejectException(TooManyCrawlers))
       } else if (jobs.exists(pair => pair._2.job.crawlerId == config.id)) {
-        sender ! JobStartFailed(new CrawlRejectException(crawlerExists))
+        sender ! JobStartFailed(new CrawlRejectException(CrawlerExists))
       } else {
         val resolvedConfig = config.userAgent match {
           case Some(ua) => config
@@ -92,7 +92,7 @@ class SpiderManager(
     context.watch(crawler)
     listeners.foreach(l => crawler ! Listen(l))
     jobs = jobs + (newJob.jobId -> JobEntry(crawler, newJob))
-    crawler.ask(Run)(askTimeout).map {
+    crawler.ask(Run)(AskTimeout).map {
       case StartOkay(msg, job) => newJob
       case StartFailed(t, conf) => JobStartFailed(t)
     }
@@ -111,8 +111,8 @@ class SpiderManager(
 }
 
 object SpiderManager {
-  val tooManyCrawlers = "The maximum number of active crawlers is reached"
-  val crawlerExists = "There is already an active crawler with same crawler configuration"
+  val TooManyCrawlers = "The maximum number of active crawlers is reached"
+  val CrawlerExists = "There is already an active crawler with same crawler configuration"
 
   def props(config: Config, spiderClient: HttpClient, robotsRuleCache: ActorRef): Props = {
     Props(classOf[SpiderManager],
@@ -138,5 +138,4 @@ object SpiderManager {
   case class JobsInfo(jobs: Seq[CrawlJob])
 
   case object JobNotFound
-
 }

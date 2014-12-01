@@ -5,8 +5,7 @@ package org.ferrit.core.util
  * store frequency count and total bytes downloaded.
  */
 case class MediaCounters(counters: Map[String, Media] = Map.empty) {
-  
-  def add(key: String, count: Int, totalBytes: Int):MediaCounters = {
+  def add(key: String, count: Int, totalBytes: Int): MediaCounters = {
     val med = get(key) match {
       case Some(m) => Media(m.count + count, m.totalBytes + totalBytes)
       case None => Media(count, totalBytes)
@@ -23,7 +22,5 @@ case class MediaCounters(counters: Map[String, Media] = Map.empty) {
 case class Media(count: Int, totalBytes:Int)
 
 object MediaCounters {
-  
   def apply() = new MediaCounters(Map.empty)
-
 }

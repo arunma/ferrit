@@ -11,11 +11,9 @@ import org.ferrit.core.util.Counters
  * Any other outcome requires the crawler to stop (e.g. StopRequested).
  */
 trait StopRule {
-
   def ask(
     config: CrawlConfig, 
     status: CrawlStatus, 
     counters: Counters, 
-    fetchesPending: Int):CrawlOutcome
-  
+    fetchesPending: Int): CrawlOutcome
 }

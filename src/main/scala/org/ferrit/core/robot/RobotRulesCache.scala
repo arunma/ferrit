@@ -1,7 +1,8 @@
 package org.ferrit.core.robot
 
+import org.ferrit.core.uri.UriReader
+
 import scala.concurrent.Future
-import org.ferrit.core.uri.{CrawlUri, UriReader}
 
 
 /**
@@ -22,13 +23,13 @@ trait RobotRulesCache {
    *     requested by the server for the given user agent.
    *     The robots txt file is fetched and parsed if not cached.
    */
-  def getDelayFor(userAgent: String, reader: UriReader):Future[Option[Int]]
+  def getDelayFor(userAgent: String, reader: UriReader): Future[Option[Int]]
   
   /**
    * @return true -
    *     if URI of the given reader and user agent can be crawled.
    *     The robots txt file is fetched and parsed if not cached.
    */  
-  def allow(userAgent: String, reader: UriReader):Future[Boolean]
+  def allow(userAgent: String, reader: UriReader): Future[Boolean]
 
 }

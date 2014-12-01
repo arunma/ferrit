@@ -33,9 +33,7 @@ case class DefaultResponse(
   _headers: Map[String, Seq[String]],
   _content: Array[Byte],
   _stats: Stats,
-  _request: Request
-  
-  ) extends Response 
+  _request: Request) extends Response
 {
   def statusCode: Int = _statusCode
   def headers: Map[String, Seq[String]] = _headers
@@ -48,8 +46,7 @@ case class Stats(
   timeStatus: Long, // elapsed time in millis
   timeHeaders: Long,
   timeCompleted: Long) {
-
-  override def toString:String = 
+  override def toString:String =
     "Stats(" +
       s"timeStatus: ${timeStatus}ms, " + 
       s"timeHeaders: ${timeHeaders}ms, " + 
@@ -58,7 +55,5 @@ case class Stats(
 }
 
 object Stats {
-  
   def empty:Stats = Stats(0,0,0)
-
 }

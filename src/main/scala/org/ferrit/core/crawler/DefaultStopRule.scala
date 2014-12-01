@@ -2,9 +2,7 @@ package org.ferrit.core.crawler
 
 import org.ferrit.core.util.Counters
 
-
 class DefaultStopRule extends StopRule {
-  
   import CrawlWorker._
 
   /** 
@@ -14,13 +12,11 @@ class DefaultStopRule extends StopRule {
    */
   val MinFailCount = 10
 
-  
   override def ask(
     c: CrawlConfig, 
     status: CrawlStatus, 
     ct: Counters, 
-    fetchesPending: Int):CrawlOutcome = {
-    
+    fetchesPending: Int): CrawlOutcome = {
     if (status.shouldStop) StopRequested
     else if (fetchesPending == 0) CompletedOkay
     else if (fetchesPending >= c.maxQueueSize) TooManyQueued
@@ -31,7 +27,6 @@ class DefaultStopRule extends StopRule {
               c.maxRequestFails,
               ct.get(FetchAttempts),
               ct.get(FetchFails))) TooManyFetchesFailed
-
     else KeepCrawling
   }
 
@@ -51,15 +46,7 @@ class DefaultStopRule extends StopRule {
       totalSeeds: Int, 
       maxFailPercent: Double, 
       fetchAttempts: Int, 
-      fetchFails: Int): Boolean = {
-
-    if (fetchAttempts <= totalSeeds || fetchAttempts < MinFailCount) {
-      false
-    } else {
-      val failPercent = fetchFails.toDouble / fetchAttempts.toDouble
-      failPercent >= maxFailPercent
-    }
-
-  }
-
+      fetchFails: Int) =
+    !(fetchAttempts <= totalSeeds || fetchAttempts < MinFailCount) &&
+        fetchFails.toDouble /  fetchAttempts.toDouble >= maxFailPercent
 }

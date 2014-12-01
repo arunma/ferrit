@@ -7,7 +7,7 @@ package org.ferrit.core.util
  */
 object TextFormatter {
 
-  def lcell(value: String, width: Int, padChar: String):String = {
+  def lcell(value: String, width: Int, padChar: String): String = {
     val diff = width - value.length
     lcrop(if (diff > 0) value + line(padChar, diff) else value, width)
   }
@@ -18,7 +18,7 @@ object TextFormatter {
   def line(chars: String, num: Int): String =
     lcrop((0 until num).map(c => chars).mkString, num)
 
-  def rcell(value: String, width: Int, padChar: String):String = {
+  def rcell(value: String, width: Int, padChar: String): String = {
     val diff = width - value.length
     rcrop(if (diff > 0) line(padChar, diff) + value else value, width)
   }
@@ -31,7 +31,7 @@ object TextFormatter {
   /**
    * @see http://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
    */
-  private def humanReadableByteCount(bytes: Long, si: Boolean):String = {
+  private def humanReadableByteCount(bytes: Long, si: Boolean): String = {
       val unit = if (si) 1000 else 1024
       if (bytes < unit) bytes + " b "
       else {
@@ -45,7 +45,6 @@ object TextFormatter {
 
   // Switch to Joda PeriodFormatterBuilder?
   def formatElapsedTime(elapsedMillis: Long):String = {
-
     val millis  = elapsedMillis % 1000
     val seconds = (elapsedMillis / 1000) % 60
     val minutes = (elapsedMillis / (1000*60)) % 60

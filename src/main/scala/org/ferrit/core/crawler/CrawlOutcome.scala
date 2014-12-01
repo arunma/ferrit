@@ -1,9 +1,5 @@
 package org.ferrit.core.crawler
 
-import org.joda.time.DateTime
-import org.ferrit.core.uri.{CrawlUri, FetchJob}
-import org.ferrit.core.model.CrawlJob
-
 sealed abstract class CrawlOutcome(val state: String, val message: String)
 object KeepCrawling extends CrawlOutcome("Continuing", "Keep crawling")
 object CompletedOkay extends CrawlOutcome("Completed", "Completed Okay")

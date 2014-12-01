@@ -1,28 +1,27 @@
 package org.ferrit.dao.cassandra
 
+import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.policies.Policies
-import com.datastax.driver.core.{Cluster, Session}
 import com.typesafe.config.Config
 
 class CassandraPersistenceManager(config: CassandraConfig) {
-  val cluster: Cluster = CassandraPersistenceManager.initCluster(config)
+  val cluster = CassandraPersistenceManager.initCluster(config)
 
-  val session: Session = cluster.connect(config.keyspace)
+  val session = cluster.connect(config.keyspace)
 
   def this(config: Config) {
     this(new CassandraConfig(config))
   }
 
-  def shutdown():Unit = {
+  def shutdown(): Unit = {
 //    cluster.close()
   }
 
-  def getColumnTTL(config: Config):CassandraColumnTTL =   
-    CassandraColumnTTL(
-      CassandraTables.AllTables.map({t =>
-        t -> config.getInt(s"persistence.cassandra.tableColumnTTL.$t")
-      }).toMap
-    )
+  def getColumnTTL(config: Config): CassandraColumnTTL =
+    CassandraColumnTTL {
+      CassandraTables.AllTables.map(
+        t => t -> config.getInt(s"persistence.cassandra.tableColumnTTL.$t")).toMap
+    }
 }
 
 object CassandraPersistenceManager {

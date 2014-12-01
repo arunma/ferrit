@@ -3,7 +3,6 @@ package org.ferrit.core.crawler
 import org.ferrit.core.uri.CrawlUri
 import org.ferrit.core.util.KeyValueParser
 
-
 /**
  * A CrawlConfigTester is a utility to aid crawler configuration in a user interface.
  *
@@ -22,20 +21,20 @@ import org.ferrit.core.util.KeyValueParser
  * Test syntax:
  *
  * <code>
- *   should [accept|reject] url-regex-pattern
+ * should [accept|reject] url-regex-pattern
  * </code>
  *
  * An configuration example with the following seeds and UriFilter rules:
  *
  * Seeds:
  * <ul>
- *   <li>www.website.com </li>
+ * <li>www.website.com </li>
  * </ul>
  *
  * PriorityRejectUriFilter rules:
  * <ul>
- *   <li>accept: http://www.website.com/ <li/>
- *   <li>reject: .*(rss|login|/?option=com_banners|/#) <li/>
+ * <li>accept: http://www.website.com/ <li/>
+ * <li>reject: .*(rss|login|/?option=com_banners|/#) <li/>
  * </ul>
  *
  * The following test cases ensure that the above seeds are accepted and
@@ -43,19 +42,17 @@ import org.ferrit.core.util.KeyValueParser
  * containing rss, login or a banner option parameter are rejected.
  *
  * <code>
- *   should accept: http://www.website.com/somepage <br/>
- *   should reject: http://www.website.com/rss/ <br/>
- *   should reject: http://www.website.com/index.php?option=com_bannersmanager&task=click&bid=1115 <br/>
+ * should accept: http://www.website.com/somepage <br/>
+ * should reject: http://www.website.com/rss/ <br/>
+ * should reject: http://www.website.com/index.php?option=com_bannersmanager&task=click&bid=1115 <br/>
  * </code>
  *
  */
 object CrawlConfigTester {
-
-  val testDirectives = Seq("should accept", "should reject")
+  val TestDirectives = Seq("should accept", "should reject")
   val Passed = "passed"
 
-  def testConfig(config: CrawlConfig):Results = {
-
+  def testConfig(config: CrawlConfig): Results = {
     val filter = config.uriFilter
 
     def testUri(uri: CrawlUri, shouldAccept: Boolean) = {
@@ -65,34 +62,28 @@ object CrawlConfigTester {
     }
 
     val seedResults = config.seeds.map(testUri(_, shouldAccept = true))
-    
+
+    def bindFn(key: String, value: String) = key match {
+      case "should accept" => testUri(CrawlUri(value), shouldAccept = true)
+      case "should reject" => testUri(CrawlUri(value), shouldAccept = false)
+    }
+
     val testResults = config.tests match {
       case None => Nil
-      case Some(tests) =>
-        KeyValueParser.parse(testDirectives, tests, 
-        {(key:String, value:String) => key match {
-          case "should accept" => testUri(CrawlUri(value), shouldAccept = true)
-          case "should reject" => testUri(CrawlUri(value), shouldAccept = false)
-          }
-        }
-      )
+      case Some(tests) => KeyValueParser.parse(TestDirectives, tests, bindFn)
     }
-    
+
     val allPassed = (seedResults ++ testResults).forall(_.passed)
-    
     Results(allPassed, seedResults, testResults)
   }
 
   case class Results(
-    allPassed: Boolean, 
+    allPassed: Boolean,
     seedResults: Seq[Result],
-    testResults: Seq[Result]
-  )
+    testResults: Seq[Result])
 
   case class Result(
-    uri: CrawlUri, 
-    passed: Boolean, 
-    message: String
-  )
-
+    uri: CrawlUri,
+    passed: Boolean,
+    message: String)
 }

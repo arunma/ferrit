@@ -88,26 +88,18 @@ case class CrawlConfig (
   
   def getUserAgent:String = userAgent.getOrElse("")
   
-  def validated:Try[Boolean] = {
-    
+  def validated: Try[Boolean] = {
     def because(reason: String) = CrawlRejectException(reason)
 
-    if (getUserAgent.trim.isEmpty) {
+    if (getUserAgent.trim.isEmpty)
       Failure(because(UserAgentMissing))
-
-    } else if (seeds == null || seeds.isEmpty) {
+    else if (seeds == null || seeds.isEmpty)
       Failure(because(SeedsAreMissing))
-
-    } else if (!seeds.forall(uriFilter.accept)) {
-      val explanation = seeds.map(uriFilter.explain).mkString(" and ")
-      Failure(because(SeedsAreRejected.format(explanation)))
-
-    } else {
+    else if (!seeds.forall(uriFilter.accept))
+      Failure(because(SeedsAreRejected.format(seeds.map(uriFilter.explain).mkString(" and "))))
+    else
       Success(true)
-    }
-    
   }
-
 }
 
 object CrawlConfig {
