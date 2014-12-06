@@ -1,6 +1,6 @@
 package org.ferrit.dao.cassandra
 
-import com.datastax.driver.core.{Row, Session}
+import com.datastax.driver.core.{ Row, Session }
 import org.ferrit.core.model.DocumentMetaData
 import org.ferrit.dao.DocumentMetaDataDAO
 import org.ferrit.dao.cassandra.CassandraDAO._
@@ -8,18 +8,15 @@ import org.ferrit.dao.cassandra.CassandraDAO._
 class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Session)
     extends DocumentMetaDataDAO {
   val stmtInsert = session.prepare(
-    "INSERT INTO document_metadata (" + 
-    "  crawler_id, job_id, uri, content_type, content_length, depth, fetched, response_status " + 
-    ") VALUES (?,?,?,?,?,?,?,?) USING TTL " + ttl.get(CassandraTables.DocumentMetaData)
-  )
-  
+    "INSERT INTO document_metadata (" +
+      "  crawler_id, job_id, uri, content_type, content_length, depth, fetched, response_status " +
+      ") VALUES (?,?,?,?,?,?,?,?) USING TTL " + ttl.get(CassandraTables.DocumentMetaData))
+
   val stmtFindByJobAndUri = session.prepare(
-    "SELECT * FROM document_metadata WHERE job_id = ? AND uri = ?"
-  )
+    "SELECT * FROM document_metadata WHERE job_id = ? AND uri = ?")
 
   val stmtFindByJob = session.prepare(
-    "SELECT * FROM document_metadata WHERE job_id = ?"
-  )
+    "SELECT * FROM document_metadata WHERE job_id = ?")
 
   def insert(docMeta: DocumentMetaData): Unit = {
     session.execute(
@@ -31,16 +28,15 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
         .setInt("content_length", docMeta.contentLength)
         .setInt("depth", docMeta.depth)
         .setDate("fetched", docMeta.fetched)
-        .setString("response_status", docMeta.responseStatus)
-    )
+        .setString("response_status", docMeta.responseStatus))
   }
 
   def find(jobId: String, uri: String): Option[DocumentMetaData] =
     mapOne {
       session.execute(stmtFindByJobAndUri.bind()
-          .setString("job_id", jobId)
-          .setString("uri", uri))
-    } {rowToEntity}
+        .setString("job_id", jobId)
+        .setString("uri", uri))
+    } { rowToEntity }
 
   def find(jobId: String): Seq[DocumentMetaData] = {
     val docs = mapAll {
@@ -61,6 +57,5 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
     row.getInt("content_length"),
     row.getInt("depth"),
     row.getDate("fetched"),
-    row.getString("response_status")
-  )
+    row.getString("response_status"))
 }

@@ -1,17 +1,18 @@
 package org.ferrit.core.http
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+class TestResponse extends UnitSpec {
 
-class TestResponse extends FlatSpec with ShouldMatchers {
-  
   behavior of "Response"
 
   it should "return first header" in {
-    
+
     val r = DefaultResponse(
-      200, 
+      200,
       Map(
         "Content-Type" -> Seq("text/html"),
         "Duplicate-Headers" -> Seq("dupe1", "dupe2")

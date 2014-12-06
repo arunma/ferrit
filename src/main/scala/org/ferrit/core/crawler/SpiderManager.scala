@@ -1,31 +1,28 @@
 package org.ferrit.core.crawler
 
 import akka.actor.SupervisorStrategy.Stop
-import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, Terminated}
-import akka.pattern.{ask, pipe}
+import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, Terminated }
+import akka.pattern.{ ask, pipe }
 import akka.routing.Listen
 import akka.util.Timeout
 import com.typesafe.config.Config
-import org.ferrit.core.crawler.CrawlWorker.{Run, StartFailed, StartOkay, StopCrawl}
+import org.ferrit.core.crawler.CrawlWorker.{ Run, StartFailed, StartOkay, StopCrawl }
 import org.ferrit.core.http.HttpClient
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.parser.MultiParser
-import org.ferrit.core.uri.{InMemoryFrontier, InMemoryUriCache}
+import org.ferrit.core.uri.{ InMemoryFrontier, InMemoryUriCache }
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
-
-/**
- * Manages a collection of running crawler jobs up to a given limit.
- */
+/** Manages a collection of running crawler jobs up to a given limit.
+  */
 class SpiderManager(
-  node: String,
-  userAgent: String,
-  maxCrawlers: Int,
-  httpClient: HttpClient,
-  robotRulesCache: ActorRef
-) extends Actor {
+    node: String,
+    userAgent: String,
+    maxCrawlers: Int,
+    httpClient: HttpClient,
+    robotRulesCache: ActorRef) extends Actor {
   import org.ferrit.core.crawler.SpiderManager._
 
   private[crawler] implicit val execContext = context.system.dispatcher
@@ -86,8 +83,7 @@ class SpiderManager(
       httpClient,
       robotRulesCache,
       MultiParser.default,
-      new DefaultStopRule
-    ))
+      new DefaultStopRule))
 
     context.watch(crawler)
     listeners.foreach(l => crawler ! Listen(l))

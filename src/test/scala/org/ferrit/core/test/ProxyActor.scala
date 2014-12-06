@@ -12,11 +12,11 @@ import akka.actor.{Actor, ActorRef, Props}
  * Neither the parent or child should be aware that there is a proxy in between them.
  */
 class ProxyActor(realParent: ActorRef, childProps: Props, childName: String) extends Actor {
-  
+
   val child = context.actorOf(childProps, childName)
-  
+
   def receive = {
-    
+
     case msg if sender == child => realParent forward msg
 
     case msg if sender == realParent => child forward msg

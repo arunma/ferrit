@@ -1,6 +1,7 @@
 package org.ferrit.core.test
 
-import org.scalatest.{FlatSpec, BeforeAndAfterAll}
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.matchers.ShouldMatchers
 import scala.concurrent.duration._
 import scala.concurrent.{Await,ExecutionContext}
@@ -11,13 +12,13 @@ import org.ferrit.core.http.{HttpClient, Request, Response, Get}
 /**
  * These tests test the testing tools themselves.
  */
-class TestFakeHttpClients extends FlatSpec with ShouldMatchers {
-  
+class TestFakeHttpClients extends UnitSpec {
+
   behavior of classOf[LinkedListHttpClient].getSimpleName
 
-  
+
   it should "return pages within a given number range" in {
-    
+
     val numPages = 100
     val client = new LinkedListHttpClient("http://site.net", numPages)
 
@@ -39,17 +40,17 @@ class TestFakeHttpClients extends FlatSpec with ShouldMatchers {
     request("http://site.net/page1.html")
       .contentString
       .contains("""<a href="http://site.net/page2.html">""") should equal (true)
-    
+
     // Penultimate points to last (page98 links to page99)
     request("http://site.net/page98.html")
       .contentString
       .contains("""<a href="http://site.net/page99.html">""") should equal (true)
-  
+
     // Last page is 99 but should not contain any link
     request("http://site.net/page100.html")
       .contentString
       .contains("""<a href="http://site.net/page100.html">""") should equal (false)
-  
+
     // There is no page0 because the index is reserved for that
     request("http://site.net/page0.html").statusCode should equal (404)
 
@@ -57,7 +58,7 @@ class TestFakeHttpClients extends FlatSpec with ShouldMatchers {
     request("http://site.net/page101.html").statusCode should equal (404)
     request("http://site.net:8080/page1.html").statusCode should equal (404)
     request("http://site2.net/page1.html").statusCode should equal (404)
-    
+
   }
 
 }

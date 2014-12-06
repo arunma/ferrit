@@ -1,14 +1,13 @@
 package org.ferrit.core.parser
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.ferrit.core.http.{DefaultResponse, Get, Request, Response, Stats}
 import org.ferrit.core.uri.CrawlUri
 import org.ferrit.core.util.HttpUtil._
 import org.mockito.Mockito._
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
 
-
-class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
+class TestHtmlParserJsoup extends UnitSpec {
 
   val css_url = "css_url"
 
@@ -16,7 +15,7 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
 
 
   it should "only parse HTML documents" in {
-    
+
     def responseOf(contentType: String):Response = {
       val r = mock(classOf[Response])
       when (r.contentType) thenReturn Some(contentType)
@@ -36,7 +35,7 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     intercept[ParseException] { parser.parse(responseOf("")) }
 
   }
-  
+
   it should "ignore empty attribute values" in {
     val html = """
         |<!doctype html>
@@ -68,7 +67,7 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
   }
 
   it should "parse links from various elements" in {
-    
+
     val html = """
         |<!doctype html>
         |<html>
@@ -96,9 +95,9 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     result.links.size should equal(3)
 
   }
-  
+
   it should "exclude <base> elements from link extraction" in {
-    
+
     val html = """
         |<html><head>
         |<base href="should be ignored"></base>
@@ -110,11 +109,11 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     val result: ParserResult = parser.parse(response)
 
     result.links should equal (Set.empty)
-    
+
   }
 
-  it should "parse links with respect to base tag" in {    
- 
+  it should "parse links with respect to base tag" in {
+
     val html = """
         |<!doctype html>
         |<html>
@@ -138,20 +137,20 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     result.links should contain(Link("a", "http://site2.com/page2.html", "this link", noFollow = false, Some(CrawlUri("http://site2.com/page2.html")), None))
     result.links should contain(Link("a", "page1.html", "this link", noFollow = false, Some(CrawlUri("http://site3.com/page1.html")), None))
     result.links.size should equal (2)
-    
+
   }
 
   it should "identify the meta noindex directive" in {
 
     val parser = HtmlParserJsoup
-    
+
     def expecting(expected: Boolean, html: String) = {
       val request = makeRequest("http://site.com")
       val response = makeResponse(html, request)
-      parser.parse(response).indexingDisallowed should equal (expected) 
+      parser.parse(response).indexingDisallowed should equal (expected)
     }
 
-    val html = 
+    val html =
       """<html><head>
       |<meta name="robots" content="%s" />
       |</head><body/></html>""".stripMargin
@@ -162,20 +161,20 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     expecting(expected = true, html.format("nofollow, noindex"))
     expecting(expected = false, html.format("nofollow"))
     expecting(expected = false, html.format("noindexing"))
-    
+
   }
 
   it should "identify the meta nofollow directive" in {
 
     val parser = HtmlParserJsoup
-    
+
     def expecting(expected: Boolean, html: String) = {
       val request = makeRequest("http://site.com")
       val response = makeResponse(html, request)
-      parser.parse(response).followingDisallowed should equal (expected) 
+      parser.parse(response).followingDisallowed should equal (expected)
     }
 
-    val html = 
+    val html =
       """<html><head>
       |<meta name="robots" content="%s" />
       |</head><body/></html>""".stripMargin
@@ -186,12 +185,12 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
     expecting(expected = true, html.format("nofollow, noindex"))
     expecting(expected = false, html.format("noindex"))
     expecting(expected = false, html.format("nofollowing"))
-    
+
   }
 
   it should "handle parse failures" in {
-    
-    val html = 
+
+    val html =
       """<html><head>
       |<link href="bad_relative_uri1.css?id" rel="stylesheet" />
       |<link href="bad_relative_uri2.css?id===" rel="stylesheet" />
@@ -213,14 +212,14 @@ class TestHtmlParserJsoup extends FlatSpec with ShouldMatchers {
   def makeRequest(uri: String) = Get("*", CrawlUri(uri))
 
   /**
-   * Better just to use a default Response as a mock object doesn't buy very much 
+   * Better just to use a default Response as a mock object doesn't buy very much
    * and in fact leads to more verbose and buggy behaviour.
    */
   def makeResponse(content: String, request: Request) = DefaultResponse(
-    200, 
+    200,
     Map(ContentTypeHeader -> Seq(TextHtmlUtf8)),
-    content.getBytes, 
-    Stats.empty, 
+    content.getBytes,
+    Stats.empty,
     request
   )
 

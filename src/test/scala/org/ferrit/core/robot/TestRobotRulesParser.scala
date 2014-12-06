@@ -1,18 +1,17 @@
 package org.ferrit.core.robot
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
+
 import org.ferrit.core.robot.RobotRulesParser.LineParser
 
+class TestRobotRulesParser extends UnitSpec {
 
-class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
-  
     behavior of "RobotRulesParser"
 
     val parser = new RobotRulesParser
     val EmptyRules = RobotRules(Nil, Nil, Nil, Nil, None)
     def parseLine(text: String) = RobotRulesParser.parseLine(text)
-      
+
 
     it should "parse known directives" in {
       parseLine ("user-agent: *") should equal (Some("user-agent", "*"))
@@ -41,7 +40,7 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
       parseLine ("#") should equal (None)
       parseLine ("# ") should equal (None)
     }
-    
+
 
     it should "parse all types of directive" in {
       val rules = """
@@ -54,16 +53,16 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         .stripMargin
       parser.parse("agent", rules) should equal (
         RobotRules(
-          Seq("/gh"), 
-          Seq("/abc"), 
+          Seq("/gh"),
+          Seq("/abc"),
           Seq("http://site.com/sitemap.xml"),
-          Seq("www.site.com"), 
+          Seq("www.site.com"),
           None
         )
-      )        
+      )
     }
 
-    it should "not parse rules for different user agent" in {  
+    it should "not parse rules for different user agent" in {
       val rules = """
         |User-agent: custom_agent
         |Disallow: a
@@ -99,7 +98,7 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
     }
 
     it should "parse two records (wildcard agent first)" in {
-      
+
       val rules = """
         |User-agent: *
         |Disallow: /abc
@@ -118,10 +117,10 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
 
       parser.parse("custom_agent", rules) should equal (
         RobotRules(
-          Seq("/gh"), 
-          Seq("/abc","/abc", "/def"), 
+          Seq("/gh"),
+          Seq("/abc","/abc", "/def"),
           Seq("http://site.com/sitemap.xml"),
-          Seq("www.site.com"), 
+          Seq("www.site.com"),
           None
         )
       )
@@ -148,10 +147,10 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
 
       parser.parse("custom_agent", rules) should equal (
         RobotRules(
-          Seq("/gh"), 
-          Seq("/abc", "/def","/abc", "/jkl"), 
+          Seq("/gh"),
+          Seq("/abc", "/def","/abc", "/jkl"),
           Seq("http://site.com/sitemap.xml"),
-          Seq("www.site.com"), 
+          Seq("www.site.com"),
           None
         )
       )
@@ -175,13 +174,13 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         |Disallow: /jkl
         |
         |""".stripMargin
-        
+
       parser.parse("custom_agent", rules) should equal (
         RobotRules(
-          Seq("/gh"), 
-          Seq("/abc", "/def","/abc", "/jkl"), 
+          Seq("/gh"),
+          Seq("/abc", "/def","/abc", "/jkl"),
           Seq("http://site.com/sitemap.xml"),
-          Seq("www.site.com"), 
+          Seq("www.site.com"),
           None
         )
       )
@@ -200,13 +199,13 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
 
     // Functionally the Allow directive is processed in a manner
     // similar to Google's implementation.
-    //    
-    // Some major crawlers support an Allow directive which can counteract 
+    //
+    // Some major crawlers support an Allow directive which can counteract
     // a following Disallow directive. This is useful when one tells
-    // robots to avoid an entire directory but still wants some HTML documents 
-    // in that directory crawled and indexed. While by standard implementation 
-    // the first matching robots.txt pattern always wins, 
-    // Google's implementation differs in that Allow patterns with equal or more 
+    // robots to avoid an entire directory but still wants some HTML documents
+    // in that directory crawled and indexed. While by standard implementation
+    // the first matching robots.txt pattern always wins,
+    // Google's implementation differs in that Allow patterns with equal or more
     // characters in the directive path win over a matching Disallow pattern.
     //
     // @see http://en.wikipedia.org/wiki/Robots_exclusion_standard
@@ -227,8 +226,8 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         |"""
         .stripMargin
       ))
-      
-      assertAllows(parser.parse("agent", 
+
+      assertAllows(parser.parse("agent",
         """
         |User-agent: *
         |Allow: /foo/bar
@@ -236,7 +235,7 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         |"""
         .stripMargin
       ))
-      
+
       assertAllows(parser.parse("agent",
         """
         |User-agent: agent
@@ -246,7 +245,7 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         .stripMargin
       ))
 
-      assertAllows(parser.parse("agent", 
+      assertAllows(parser.parse("agent",
         """
         |User-agent: agent
         |Allow: /foo/bar
@@ -258,14 +257,14 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
     }
 
     it should "let allow override disallow - multiple records" in {
-      
+
       def assertAllows(rr: RobotRules) = {
         rr.allow("/foo/bar") should equal (true)
         rr.allow("/foo/baz") should equal (false)
         rr.allow("/foo") should equal (false)
       }
 
-      assertAllows(parser.parse("agent", 
+      assertAllows(parser.parse("agent",
         """
         |User-agent: *
         |Allow: /foo/bar
@@ -276,7 +275,7 @@ class TestRobotRulesParser extends FlatSpec with ShouldMatchers {
         .stripMargin
       ))
 
-      assertAllows(parser.parse("agent", 
+      assertAllows(parser.parse("agent",
         """
         |User-agent: *
         |Disallow: /foo

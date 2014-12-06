@@ -1,9 +1,8 @@
 package org.ferrit.core.util
 
-/**
- * A map of Media type records keyed by ContentType HTTP header string that 
- * store frequency count and total bytes downloaded.
- */
+/** A map of Media type records keyed by ContentType HTTP header string that
+  * store frequency count and total bytes downloaded.
+  */
 case class MediaCounters(counters: Map[String, Media] = Map.empty) {
   def add(key: String, count: Int, totalBytes: Int): MediaCounters = {
     val med = get(key) match {
@@ -19,7 +18,7 @@ case class MediaCounters(counters: Map[String, Media] = Map.empty) {
 
 }
 
-case class Media(count: Int, totalBytes:Int)
+case class Media(count: Int, totalBytes: Int)
 
 object MediaCounters {
   def apply() = new MediaCounters(Map.empty)

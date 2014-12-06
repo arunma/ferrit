@@ -1,11 +1,12 @@
 package org.ferrit.core.filter
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.ferrit.core.filter.FirstMatchUriFilter._
 
-
-class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
+class TestFirstMatchUriFilter extends UnitSpec {
 
   import UriFilter.implicitConvertStringToCrawlUri
 
@@ -16,7 +17,7 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "allow matching follows but disallow even if not explicitly rejected" in {
-    
+
     val f = new FirstMatchUriFilter(Seq(
       Accept("http://website1.com/".r)
     ))
@@ -27,7 +28,7 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "only allow matches by prefix" in {
-    
+
     val socialMediaUri = "https://social.media.site.com?uri=http://site.net/page1"
 
     val f = new FirstMatchUriFilter(Seq(Accept("http://site.net/".r)))
@@ -41,7 +42,7 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "not allow when rejected or not explictly followed" in {
-    
+
     val f = new FirstMatchUriFilter(Seq(
       Reject("http://website1.com/".r)
     ))
@@ -52,7 +53,7 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "allow certain follows" in {
-    
+
     val f = new FirstMatchUriFilter(Seq(
       Accept("http://website1.com/".r),
       Accept("http://sub.website1.com/".r)
@@ -105,14 +106,14 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
     uf1.accept("http://site.com") should equal (true)
     uf1.accept("http://site.com/1") should equal (false)
 
-  
+
     // Example unescaped dot treated as unintentional "any char"
     val uf2 = new FirstMatchUriFilter(Seq(
       Accept("""^http://site.com$""".r)
     ))
     uf2.accept("http://sitescom") should equal (true)
 
-    // Must start with and end with 
+    // Must start with and end with
     // (not that useful because it misses query strings)
 
     val uf3 = new FirstMatchUriFilter(Seq(
@@ -127,16 +128,16 @@ class TestFirstMatchUriFilter extends FlatSpec with ShouldMatchers {
       Accept("""^http://site\.com""".r)
     ))
     uf4.accept("http://site.com/1") should equal (true)
-    
+
     val uf5 = new FirstMatchUriFilter(Seq(
       Accept("^http://site2.com".r)
     ))
     uf5.accept("http://site.com?ref=http://site2.com") should equal (false)
-  
+
   }
 
   it should "illustrate valid and invalid JPEG file extension pattern" in {
-  
+
     val f = new FirstMatchUriFilter(Seq(
       Accept("""(?i)http://site.com/.*\.jpe?g$""".r)
     ))

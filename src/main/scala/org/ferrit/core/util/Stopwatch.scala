@@ -1,8 +1,7 @@
 package org.ferrit.core.util
 
-/**
- * Life is very short.
- */
+/** Life is very short.
+  */
 class Stopwatch {
   val started: Long = now
 

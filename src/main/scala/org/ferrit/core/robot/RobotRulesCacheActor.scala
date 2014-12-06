@@ -4,11 +4,10 @@ import akka.actor.Actor
 import akka.pattern.pipe
 import org.ferrit.core.uri.UriReader
 
-/**
- * A RobotRulesCache is not threadsafe (well at least the default implementation isn't).
- * By wrapping it with an enclosing Actor access to it by multiple crawlers 
- * becomes civilised.
- */
+/** A RobotRulesCache is not threadsafe (well at least the default implementation isn't).
+  * By wrapping it with an enclosing Actor access to it by multiple crawlers
+  * becomes civilised.
+  */
 class RobotRulesCacheActor(cache: RobotRulesCache) extends Actor {
 
   import org.ferrit.core.robot.RobotRulesCacheActor._

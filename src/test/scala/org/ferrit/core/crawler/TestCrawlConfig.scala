@@ -1,14 +1,17 @@
 package org.ferrit.core.crawler
 
-import scala.util.{Failure, Success}
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.ferrit.core.filter.FirstMatchUriFilter
 import org.ferrit.core.filter.FirstMatchUriFilter.Accept
 import org.ferrit.core.uri.CrawlUri
 
-class TestCrawlConfig extends FlatSpec with ShouldMatchers {
-  
+import scala.util.{Failure, Success}
+
+class TestCrawlConfig extends UnitSpec {
+
   val uri = "http://website.net"
 
   val config = CrawlConfig(

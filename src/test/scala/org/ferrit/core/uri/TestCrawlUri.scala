@@ -1,7 +1,7 @@
 package org.ferrit.core.uri
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
+
 import spray.http.Uri
 
 /**
@@ -18,26 +18,26 @@ import spray.http.Uri
  * @see HtmlUnit { @see http://code.google.com/p/crawler4j/source/browse/src/test/java/edu/uci/ics/crawler4j/tests/URLCanonicalizerTest.java
  *
  */
-class TestCrawlUri extends FlatSpec with ShouldMatchers {
-  
+class TestCrawlUri extends UnitSpec {
+
   behavior of "CrawlUri"
 
-  
+
   def crawlableUri(uri: String) = CrawlUri(uri).crawlableUri
 
   it should "URIs normalised to same URI string should have same equals and hashCode" in {
-    
+
     CrawlUri("http://website.com:80").hashCode should equal (
       CrawlUri("http://website.com").hashCode
     )
     CrawlUri("http://website.com:80") should equal (
       CrawlUri("http://website.com")
     )
-    
+
   }
 
   it should "produce normalized toString" in {
-    
+
     CrawlUri("http://www.site.com:8080?id=100&name=foo").toString should equal (
       "http://www.site.com:8080?id=100&name=foo"
     )
@@ -55,9 +55,9 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
   }
 
   it should "have identical hashcode for identical Uri" in {
-    
+
     val s1 = new String("http://www.site.net:8080?id=100&name=foo")
-    
+
     // Try fool VM into creating a whole different String, probably won't work!
     val sb = new StringBuilder
     sb.append("http")
@@ -67,16 +67,16 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
 
     val cu1 = CrawlUri(s1)
     val cu2 = CrawlUri(s2)
-    
+
     s1.hashCode should equal (-772506185)
     s1.hashCode should equal (s2.hashCode)
     cu1.hashCode should equal (-772506185)
     cu1.hashCode should equal (cu2.hashCode)
-    
+
   }
 
   it should "be identical when having identical raw URI strings" in {
-    
+
     // A default CrawlUri is a SprayCrawlUri which is a case class
     // so we'd expect a sensible equals when URI strings are the same
 
@@ -110,7 +110,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     //   endif;
 
     val curi = CrawlUri(
-      "http://www.website.net:1234" + 
+      "http://www.website.net:1234" +
       "/path/to/file.htm;pname=pvalue?id=100&name=someName#frag"
     )
     val parameters = "pname=pvalue"
@@ -140,7 +140,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
   it should "resolve relative URI - normal examples" in {
 
     val base = CrawlUri("http://a/b/c/d;p?q#f")
-    def resolvedUri(uri: String) = 
+    def resolvedUri(uri: String) =
       CrawlUri(uri).absoluteCrawlableUri(base).crawlableUri
 
     resolvedUri("g:h") should equal ("g:h")
@@ -194,7 +194,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     crawlableUri("http://www.website.com/A PDF File.pdf") should equal (
       "http://www.website.com/A%20PDF%20File.pdf"
     )
-    
+
     crawlableUri("http://WEBSITE.com") should equal (
       "http://website.com"
     )
@@ -202,7 +202,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     crawlableUri("http://www.website.com:80/bar.html") should equal (
       "http://www.website.com/bar.html"
     )
-    
+
     // Section "Normalizations that usually preserve semantics"
     // --------------------------------------------------------
     // See: "Adding trailing /"
@@ -217,10 +217,10 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
 
     // See: "Decoding percent-encoded octets of unreserved characters."
     // ----------------------------------------------------------------
-    // For consistency, percent-encoded octets in the ranges of ALPHA (%41–%5A 
-    // and %61–%7A), DIGIT (%30–%39), hyphen (%2D), period (%2E), underscore (%5F), 
-    // or tilde (%7E) should not be created by URI producers and, when found in 
-    // a URI, should be decoded to their corresponding unreserved characters by 
+    // For consistency, percent-encoded octets in the ranges of ALPHA (%41–%5A
+    // and %61–%7A), DIGIT (%30–%39), hyphen (%2D), period (%2E), underscore (%5F),
+    // or tilde (%7E) should not be created by URI producers and, when found in
+    // a URI, should be decoded to their corresponding unreserved characters by
     // URI normalizers.
 
     crawlableUri("http://www.site.com/display?category=foo/bar+baz") should equal (
@@ -241,12 +241,12 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     // There is no need to encode unreserved characters such as ~
     // ----------------------------------------------------------
     // see: http://tools.ietf.org/html/rfc3986#section-2.4
-    //   For example, the octet corresponding to the tilde ("~") character is often 
-    //   encoded as "%7E" by older URI processing implementations; the "%7E" 
+    //   For example, the octet corresponding to the tilde ("~") character is often
+    //   encoded as "%7E" by older URI processing implementations; the "%7E"
     //   can be replaced by "~" without changing its interpretation.
 
     // see: http://en.wikipedia.org/wiki/Percent-encoding
-    //   For maximum interoperability, URI producers are discouraged from 
+    //   For maximum interoperability, URI producers are discouraged from
     //   percent-encoding unreserved characters.
 
     crawlableUri("http://www.website.com/%7Eusername?user=%7Eusername") should equal (
@@ -256,7 +256,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     crawlableUri("http://site.com/uploads/1/0/2/5/1025/6199.jpg?1325") should equal (
       "http://site.com/uploads/1/0/2/5/1025/6199.jpg?1325"
     )
-  
+
     crawlableUri("http://site.com/page?content=<html>") should equal (
       "http://site.com/page?content=%3Chtml%3E"
     )
@@ -265,7 +265,7 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
       //"http://www.site.com/index.html"
       "http://www.site.com/index.html?"
     )
-    
+
     crawlableUri("http://www.website.com/index.html?&") should equal (
       //"http://www.website.com/index.html"
       "http://www.website.com/index.html?"
@@ -275,16 +275,16 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
       //"http://www.website.com/A/B/index.html" // Spray does not remove double slash
       "http://www.website.com//A//B/index.html"
     )
-    
+
     crawlableUri("http://www.website.com/index.html?&x=y") should equal (
       //"http://www.website.com/index.html?x=y" // Spray does not remove & after ?
       "http://www.website.com/index.html?&x=y"
     )
-   
+
     crawlableUri("http://www.website.com/../../a.html") should equal (
       "http://www.website.com/a.html"
     )
-    
+
     crawlableUri("http://www.website.com/../a/b/../c/./d.html") should equal (
       "http://www.website.com/a/c/d.html"
     )
@@ -292,12 +292,12 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
     crawlableUri("http://www.website.com/index.html?id=1234&name=test#123") should equal (
       "http://www.website.com/index.html?id=1234&name=test"
     )
-    
+
     // Spaces in the query string are converted to +
     crawlableUri("http://www.website.com/index.html?q=a b") should equal (
       "http://www.website.com/index.html?q=a+b"
     )
-    
+
     crawlableUri("http://subdomain.website.com/?baz=1") should equal (
       "http://subdomain.website.com/?baz=1"
     )
@@ -342,11 +342,11 @@ class TestCrawlUri extends FlatSpec with ShouldMatchers {
   // Tests are more or less duplicating those gone before
 
   it should "generate absolute crawlable URIs" in {
-    
+
     val baseUri = CrawlUri("http://www.site.com")
-    
+
     def absCrawlableUri(uri: String) = CrawlUri(baseUri, uri).crawlableUri
-      
+
     // Should resolve to absolute URI
     absCrawlableUri("/page1") should equal (
       "http://www.site.com/page1"

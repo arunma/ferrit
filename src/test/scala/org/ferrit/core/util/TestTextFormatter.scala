@@ -1,13 +1,13 @@
 package org.ferrit.core.util
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
+
 import org.ferrit.core.util.TextFormatter._
 
 
-class TestTextFormatter extends FlatSpec with ShouldMatchers {
-  
-  behavior of "TextFormatter" 
+class TestTextFormatter extends UnitSpec {
+
+  behavior of "TextFormatter"
 
   it should "crop a string" in {
     lcrop("spaced out", 0) should equal ("")
@@ -38,13 +38,13 @@ class TestTextFormatter extends FlatSpec with ShouldMatchers {
   }
 
   it should "format elapsed time" in {
-    
+
     val Millis = 1
     val Second = Millis * 1000
     val Minute = Second * 60
     val Hour = Minute * 60
     val Day = Hour * 24
-      
+
     formatElapsedTime(Second) should equal ("1s")
     formatElapsedTime(Second + Millis) should equal ("1s")
     formatElapsedTime(Minute) should equal ("1m")

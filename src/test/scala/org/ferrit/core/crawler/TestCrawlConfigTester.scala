@@ -1,5 +1,7 @@
 package org.ferrit.core.crawler
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.ferrit.core.crawler.CrawlConfigTester.{Result, Results}
 import org.ferrit.core.filter.FirstMatchUriFilter
 import org.ferrit.core.filter.FirstMatchUriFilter.Accept
@@ -7,8 +9,7 @@ import org.ferrit.core.uri.CrawlUri
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
-
-class TestCrawlConfigTester extends FlatSpec with ShouldMatchers {
+class TestCrawlConfigTester extends UnitSpec {
 
   import org.ferrit.core.crawler.CrawlConfigTester.Passed
 

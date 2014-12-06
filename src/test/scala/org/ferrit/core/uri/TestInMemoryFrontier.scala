@@ -1,11 +1,9 @@
 package org.ferrit.core.uri
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
 
+class TestInMemoryFrontier extends UnitSpec {
 
-class TestInMemoryFrontier extends FlatSpec with ShouldMatchers {
-  
   behavior of "InMemoryFrontier"
 
   val maxSize = 100 //10000 too slow
@@ -29,12 +27,12 @@ class TestInMemoryFrontier extends FlatSpec with ShouldMatchers {
 
     val queue = new InMemoryFrontier
     val range = 1 to maxSize
-    
+
     range.foreach(i => {
       val uri = CrawlUri("http://website.com/page" + i)
       val fe = FetchJob(uri, 0)
       val newSize = queue.enqueue(fe)
-      newSize should equal (i)  
+      newSize should equal (i)
     })
 
     queue.size should equal (maxSize)
@@ -49,8 +47,8 @@ class TestInMemoryFrontier extends FlatSpec with ShouldMatchers {
         case None => fail("Failed to dequeue at index " + i)
       }
     })
-  
+
     queue.dequeue.isEmpty should equal (true)
-    
+
   }
 }

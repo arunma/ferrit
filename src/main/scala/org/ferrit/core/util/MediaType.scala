@@ -2,10 +2,9 @@ package org.ferrit.core.util
 
 import org.ferrit.core.http.Response
 
-/**
- * Simple media type checking. Long term this would be better handled
- * by Spray.IO or Apache Tika.
- */
+/** Simple media type checking. Long term this would be better handled
+  * by Spray.IO or Apache Tika.
+  */
 object MediaType {
   def is(response: Response, mediaType: ContentType): Boolean =
     response.contentType match {

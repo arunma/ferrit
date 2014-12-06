@@ -1,21 +1,19 @@
 package org.ferrit.core.uri
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
 
+class TestInMemoryUriCache extends UnitSpec {
 
-class TestInMemoryUriCache extends FlatSpec with ShouldMatchers {
-  
   behavior of "InMemoryUriCache"
 
-  /** 
+  /**
    * Test with 2 x URIs, the second one being
    * 'normally equivalent' to the first to prove
    * that adding it to the cache will have no effect
    * if another normally equivalent URI was previously added.
    */
   it should "not store duplicate normalized URIs" in {
-    
+
     val cache:UriCache = new InMemoryUriCache
     val maxSize = 10000
 
@@ -24,8 +22,8 @@ class TestInMemoryUriCache extends FlatSpec with ShouldMatchers {
       def put(uri: CrawlUri) = {
         val newSize = cache.put(uri)
         newSize should equal (num)
-        cache.contains(uri) should equal (true) 
-      }  
+        cache.contains(uri) should equal (true)
+      }
 
       val uri = CrawlUri(s"http://site.com/page-$num")
       val uri2 = CrawlUri(s"http://site.com:80/page-$num")
@@ -37,7 +35,7 @@ class TestInMemoryUriCache extends FlatSpec with ShouldMatchers {
       put(uri)
       put(uri2)
     })
-    
+
     cache.size should equal(maxSize)
 
   }

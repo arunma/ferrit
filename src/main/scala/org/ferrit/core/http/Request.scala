@@ -3,23 +3,18 @@ package org.ferrit.core.http
 import org.ferrit.core.uri.CrawlUri
 
 sealed abstract class Request(
-  val method: String, 
+  val method: String,
   val userAgent: String,
   val crawlUri: CrawlUri,
-  val headers: Map[String, String]
-)
+  val headers: Map[String, String])
 
 case class Get(
-    
-  _userAgent: String, 
-  _crawlUri: CrawlUri, 
-  _headers: Map[String, String] = Map.empty
 
-) extends Request(
+  _userAgent: String,
+  _crawlUri: CrawlUri,
+  _headers: Map[String, String] = Map.empty) extends Request(
 
-  "GET", 
+  "GET",
   _userAgent,
-  _crawlUri, 
-  _headers
-
-)
+  _crawlUri,
+  _headers)
