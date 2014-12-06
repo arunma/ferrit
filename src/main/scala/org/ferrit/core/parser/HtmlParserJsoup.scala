@@ -2,9 +2,9 @@ package org.ferrit.core.parser
 
 import org.ferrit.core.http.Response
 import org.ferrit.core.uri.CrawlUri
-import org.ferrit.core.util.{MediaType, Stopwatch}
+import org.ferrit.core.util.{ MediaType, Stopwatch }
 import org.jsoup.Jsoup
-import org.jsoup.nodes.{Document, Element}
+import org.jsoup.nodes.{ Document, Element }
 
 object JsoupImplicits {
 
@@ -58,9 +58,8 @@ object HtmlParserJsoup extends ContentParser {
     } yield Link(e.nodeName, uriAttr, e.text, nfLink, uri, failMsg)
 
     (links.toSet,
-        head.select(metaQuery format "noindex").nonEmpty,
-        head.select(metaQuery format "nofollow").nonEmpty
-        )
+      head.select(metaQuery format "noindex").nonEmpty,
+      head.select(metaQuery format "nofollow").nonEmpty)
   }
 
   def makeUri(base: CrawlUri, uriAttr: String): (Option[CrawlUri], Option[String]) =

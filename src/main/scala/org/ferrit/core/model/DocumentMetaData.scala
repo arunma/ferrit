@@ -10,5 +10,4 @@ case class DocumentMetaData(
   contentLength: Int,
   depth: Int,
   fetched: DateTime,
-  responseStatus: String
-)
+  responseStatus: String)

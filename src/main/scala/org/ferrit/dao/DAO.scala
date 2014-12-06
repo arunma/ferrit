@@ -14,7 +14,7 @@ trait CrawlerDAO {
 }
 
 trait DocumentDAO {
-  def insert(doc: Document):Unit
+  def insert(doc: Document): Unit
 
   def find(jobId: String, uri: String): Option[Document]
 }

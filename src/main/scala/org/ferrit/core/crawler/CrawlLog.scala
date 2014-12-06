@@ -1,54 +1,52 @@
 package org.ferrit.core.crawler
 
-import akka.actor.{Actor, Props, Terminated}
+import akka.actor.{ Actor, Props, Terminated }
 import akka.event.Logging
 import org.ferrit.core.crawler.CrawlWorker._
 import org.ferrit.core.crawler.FetchMessages._
 import org.ferrit.core.model.CrawlJob
 import org.ferrit.core.util.TextFormatter._
-import org.joda.time.{DateTime, Duration}
+import org.joda.time.{ DateTime, Duration }
 
-/**
- * Register this with CrawlWorker to be notified of crawl events.
- * The fetch related messages will generate highly verbose output but
- * be helpful with debugging, for without this feedback it is hard to 
- * know what the crawler is doing.
- */
+/** Register this with CrawlWorker to be notified of crawl events.
+  * The fetch related messages will generate highly verbose output but
+  * be helpful with debugging, for without this feedback it is hard to
+  * know what the crawler is doing.
+  */
 class CrawlLog extends Actor {
-  private [crawler] val log = Logging(context.system, getClass)
-  private [crawler] val w = 80 // width of display
-  private [crawler] val debug = false
+  private[crawler] val log = Logging(context.system, getClass)
+  private[crawler] val w = 80 // width of display
+  private[crawler] val debug = false
 
-  override def receive = 
-    receiveCrawlUpdate orElse 
-    receiveFetchUpdate orElse 
-    receiveOther
+  override def receive =
+    receiveCrawlUpdate orElse
+      receiveFetchUpdate orElse
+      receiveOther
 
   def receiveCrawlUpdate: Receive = {
 
     // These messages occur once per crawl, at the beginning and end
     case StartOkay(msg, job) =>
-        log.info("New crawl started: " + job.crawlerName)
-    
-    case StartFailed(t, config) => 
+      log.info("New crawl started: " + job.crawlerName)
+
+    case StartFailed(t, config) =>
       List(
         line("-", w),
         " OOPS, CRAWL FAILED TO START",
         line("=", w),
         "",
-        lcell("Crawler name:", 16," ") + "[" + config.crawlerName + "]",
-        lcell("Time:", 16," ") + "[" + new DateTime + "]",
+        lcell("Crawler name:", 16, " ") + "[" + config.crawlerName + "]",
+        lcell("Time:", 16, " ") + "[" + new DateTime + "]",
         "",
         line("=", w),
-        ""
-      ).foreach(log.error)
+        "").foreach(log.error)
       log.error(t, s"Failed to start crawler, reason: ${t.getLocalizedMessage}")
       stop
-    
-    case EmptyFrontier => 
+
+    case EmptyFrontier =>
       logMsg("Fetch queue empty")
-    
-    case Stopped(outcome, job) => 
+
+    case Stopped(outcome, job) =>
       crawlJobToLines(job).foreach(log.info)
       stop
   }
@@ -90,8 +88,7 @@ class CrawlLog extends Actor {
         lcell("Files fetched: ", hw, ".") + rcell(" " + totalFiles, hw, "."),
         lcell("Total content: ", hw, ".") + rcell(" " + formatBytes(allBytes), hw, "."),
         lcell("Redirects: ", hw, ".") + rcell(" " + fc.getOrElse(FetchRedirects, 0), hw, "."),
-        lcell("Failed fetches: ", hw, ".") + rcell(" " + fc.getOrElse(FetchFails, 0), hw, ".")
-      ),
+        lcell("Failed fetches: ", hw, ".") + rcell(" " + fc.getOrElse(FetchFails, 0), hw, ".")),
 
       List("", "Total by content type:", ""),
 
@@ -113,13 +110,10 @@ class CrawlLog extends Actor {
       List(
         "",
         line("=", 80),
-        ""
-      )
-    )
+        ""))
 
     lines.flatten
   }
-
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 

@@ -1,13 +1,11 @@
 package org.ferrit.core.robot
 
-import org.scalatest.FlatSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.allenai.common.testkit.UnitSpec
 
-
-class TestRobotRules extends FlatSpec with ShouldMatchers {
+class TestRobotRules extends UnitSpec {
 
   behavior of "RobotRules"
-  
+
   it should "disallow everything" in {
     val r = new RobotRules(Nil, Seq("/"), Nil, Nil, Some(0))
     r.allow("/") should equal (false)
@@ -35,7 +33,7 @@ class TestRobotRules extends FlatSpec with ShouldMatchers {
     r.allow("/bar/foo") should equal (true)
   }
 
-  /** 
+  /**
    * Any point testing for this 'allow all' situation?
    * see: http://www.robotstxt.org/robotstxt.html
    * User-agent: *

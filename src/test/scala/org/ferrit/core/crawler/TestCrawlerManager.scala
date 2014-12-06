@@ -1,5 +1,7 @@
 package org.ferrit.core.crawler
 
+import org.allenai.common.testkit.UnitSpec
+
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
@@ -20,9 +22,8 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future, Promise}
 
+class TestCrawlerManager extends UnitSpec with BeforeAndAfterAll {
 
-class TestCrawlerManager extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
-  
   behavior of "CrawlerManager"
 
   import org.ferrit.core.crawler.SpiderManager._

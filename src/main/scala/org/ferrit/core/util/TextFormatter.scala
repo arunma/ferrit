@@ -1,10 +1,9 @@
 package org.ferrit.core.util
 
-/**
- * Utility code for text formatting.
- * If this grows any bigger it is probably time to start looking 
- * at using a third party library.
- */
+/** Utility code for text formatting.
+  * If this grows any bigger it is probably time to start looking
+  * at using a third party library.
+  */
 object TextFormatter {
 
   def lcell(value: String, width: Int, padChar: String): String = {
@@ -27,28 +26,27 @@ object TextFormatter {
     if (value.length > num) value.substring(value.length - num) else value
 
   def formatBytes(bytes: Long): String = humanReadableByteCount(bytes, si = true)
-  
-  /**
-   * @see http://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
-   */
+
+  /** @see http://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
+    */
   private def humanReadableByteCount(bytes: Long, si: Boolean): String = {
-      val unit = if (si) 1000 else 1024
-      if (bytes < unit) bytes + " b "
-      else {
-        val exp: Int = (Math.log(bytes) / Math.log(unit)).toInt
-        val pre: String = 
-          (if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1) + 
+    val unit = if (si) 1000 else 1024
+    if (bytes < unit) bytes + " b "
+    else {
+      val exp: Int = (Math.log(bytes) / Math.log(unit)).toInt
+      val pre: String =
+        (if (si) "kMGTPE" else "KMGTPE").charAt(exp - 1) +
           (if (si) "" else "i")
-        "%.1f %sB".format(bytes / Math.pow(unit, exp), pre)
-      }
+      "%.1f %sB".format(bytes / Math.pow(unit, exp), pre)
+    }
   }
 
   // Switch to Joda PeriodFormatterBuilder?
-  def formatElapsedTime(elapsedMillis: Long):String = {
-    val millis  = elapsedMillis % 1000
+  def formatElapsedTime(elapsedMillis: Long): String = {
+    val millis = elapsedMillis % 1000
     val seconds = (elapsedMillis / 1000) % 60
-    val minutes = (elapsedMillis / (1000*60)) % 60
-    val hours   = (elapsedMillis / (1000*60*60)) % 24
+    val minutes = (elapsedMillis / (1000 * 60)) % 60
+    val hours = (elapsedMillis / (1000 * 60 * 60)) % 24
     val days = elapsedMillis / (1000 * 60 * 60 * 24)
 
     val sb = new StringBuilder

@@ -14,7 +14,7 @@ class CassandraPersistenceManager(config: CassandraConfig) {
   }
 
   def shutdown(): Unit = {
-//    cluster.close()
+    //    cluster.close()
   }
 
   def getColumnTTL(config: Config): CassandraColumnTTL =
@@ -26,9 +26,8 @@ class CassandraPersistenceManager(config: CassandraConfig) {
 
 object CassandraPersistenceManager {
 
-  /**
-   * Best to have this in an object, can be used in tests as well.
-   */
+  /** Best to have this in an object, can be used in tests as well.
+    */
   def initCluster(config: CassandraConfig): Cluster =
     Cluster.builder()
       .addContactPoints(config.nodes.toArray: _*)
@@ -51,19 +50,16 @@ object CassandraTables {
     CrawlJobByDate,
     FetchLog,
     Document,
-    DocumentMetaData
-  )
+    DocumentMetaData)
 }
 
 case class CassandraConfig(
-  keyspace: String, 
-  nodes: Seq[String],
-  port: Int
-) {
+    keyspace: String,
+    nodes: Seq[String],
+    port: Int) {
   def this(config: Config) {
     this(config.getString("persistence.cassandra.keyspace"),
       Seq(config.getString("persistence.cassandra.node")),
-      config.getInt("persistence.cassandra.port")
-    )
+      config.getInt("persistence.cassandra.port"))
   }
 }

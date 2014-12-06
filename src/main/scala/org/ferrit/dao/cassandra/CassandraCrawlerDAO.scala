@@ -1,6 +1,6 @@
 package org.ferrit.dao.cassandra
 
-import com.datastax.driver.core.{PreparedStatement, Row, Session}
+import com.datastax.driver.core.{ PreparedStatement, Row, Session }
 import org.ferrit.core.json.PlayJsonImplicits
 import org.ferrit.core.model.Crawler
 import org.ferrit.dao.CrawlerDAO
@@ -9,27 +9,23 @@ import play.api.libs.json._
 
 class CassandraCrawlerDAO(ttl: CassandraColumnTTL)(implicit session: Session) extends CrawlerDAO {
 
-  import org.ferrit.dao.cassandra.CassandraTables.{Crawler => CrawlerTable}
+  import org.ferrit.dao.cassandra.CassandraTables.{ Crawler => CrawlerTable }
 
   val stmtInsert: PreparedStatement = session.prepare(
-    s"INSERT INTO $CrawlerTable (crawler_id, config_json) VALUES (?,?)"
-  )
+    s"INSERT INTO $CrawlerTable (crawler_id, config_json) VALUES (?,?)")
   val stmtDelete: PreparedStatement = session.prepare(
-    s"DELETE FROM $CrawlerTable WHERE crawler_id = ?"
-  )
+    s"DELETE FROM $CrawlerTable WHERE crawler_id = ?")
   val stmtFind: PreparedStatement = session.prepare(
-    s"SELECT * FROM $CrawlerTable WHERE crawler_id = ?"
-  )
+    s"SELECT * FROM $CrawlerTable WHERE crawler_id = ?")
   val stmtFindAll: PreparedStatement = session.prepare(
-    s"SELECT * FROM $CrawlerTable"
-  )
+    s"SELECT * FROM $CrawlerTable")
 
   override def insert(crawler: Crawler): Unit = {
     val json = Json.stringify(Json.toJson(crawler.config)(PlayJsonImplicits.crawlConfigWrites))
     session.execute {
       stmtInsert.bind()
-          .setString("crawler_id", crawler.crawlerId)
-          .setString("config_json", json)
+        .setString("crawler_id", crawler.crawlerId)
+        .setString("config_json", json)
     }
   }
 
@@ -48,8 +44,7 @@ class CassandraCrawlerDAO(ttl: CassandraColumnTTL)(implicit session: Session) ex
     } { rowToEntity }
 
     crawlers.sortWith(
-      (c1, c2) => c1.config.crawlerName.toLowerCase < c2.config.crawlerName.toLowerCase
-    )
+      (c1, c2) => c1.config.crawlerName.toLowerCase < c2.config.crawlerName.toLowerCase)
   }
 
   private def rowToEntity(row: Row) = {

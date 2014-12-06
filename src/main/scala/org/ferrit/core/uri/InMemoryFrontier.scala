@@ -1,16 +1,14 @@
 package org.ferrit.core.uri
 
-/**
- * A non-threadsafe implementation of Frontier based on a queue.
- * For a production like environment this would likely be replaced by something 
- * more robust such as an Akka durable message box or Apache Kafka.
- */
+/** A non-threadsafe implementation of Frontier based on a queue.
+  * For a production like environment this would likely be replaced by something
+  * more robust such as an Akka durable message box or Apache Kafka.
+  */
 class InMemoryFrontier extends Frontier {
-  /**
-   * Performance note: when the number of queued items exceeds 10k,
-   * the mutable Queue outperforms immutable Queue by an order of magnitude.
-   */
-  private [InMemoryFrontier] var uriQueue = scala.collection.mutable.Queue.empty[FetchJob]
+  /** Performance note: when the number of queued items exceeds 10k,
+    * the mutable Queue outperforms immutable Queue by an order of magnitude.
+    */
+  private[InMemoryFrontier] var uriQueue = scala.collection.mutable.Queue.empty[FetchJob]
 
   override def size: Int = uriQueue.size
 

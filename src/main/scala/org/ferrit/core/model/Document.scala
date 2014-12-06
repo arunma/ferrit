@@ -5,5 +5,4 @@ case class Document(
   jobId: String,
   uri: String,
   contentType: String,
-  content: Array[Byte]
-)
+  content: Array[Byte])

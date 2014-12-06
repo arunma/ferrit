@@ -1,14 +1,14 @@
 package org.ferrit.core.filter
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 import org.ferrit.core.filter.PriorityRejectUriFilter._
 
-
-class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
+class TestPriorityRejectUriFilter extends UnitSpec {
 
   import UriFilter.implicitConvertStringToCrawlUri
-
 
   it should "reject on empty rules to prevent unbounded crawls" in {
     val f = new PriorityRejectUriFilter(Seq())
@@ -26,7 +26,7 @@ class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "reject when rejected or not explictly accepted" in {
-    
+
     val f = new PriorityRejectUriFilter(
       Seq(Reject("http://website1.com/".r))
     )
@@ -38,7 +38,7 @@ class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
 
   it should "reject over accept in trailing slash edge case" in {
     val f = new PriorityRejectUriFilter(Seq(
-      Accept("http://website1.com/".r), 
+      Accept("http://website1.com/".r),
       Reject("http://website1.com".r)
     ))
     f.accept("http://website1.com/") should equal (false)
@@ -47,7 +47,7 @@ class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
 
   it should "accept over reject in trailing slash edge case" in {
     val f = new PriorityRejectUriFilter(Seq(
-      Accept("http://website1.com".r), 
+      Accept("http://website1.com".r),
       Reject("http://website1.com/".r)
     ))
     f.accept("http://website1.com") should equal (true)
@@ -88,7 +88,7 @@ class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
   }
 
   it should "only allow matches by prefix" in {
-    
+
     val socialMediaUri = "https://social.media.site.com?uri=http://site.net/page1"
 
     val f = new PriorityRejectUriFilter(Seq(Accept("http://site.net/".r)))
@@ -101,13 +101,13 @@ class TestPriorityRejectUriFilter extends FlatSpec with ShouldMatchers {
 
   }
 
-  /** 
-   * Because rejects take priority over accepts it is not possible with this filter 
+  /**
+   * Because rejects take priority over accepts it is not possible with this filter
    * to mix a more general reject with a very specific accept. In this scenario the
    * FirstMatchUriFilter would be preferable.
    */
   it should "specific accept rule overrides general reject rule" in {
-    
+
     val f = new PriorityRejectUriFilter(Seq(
         Accept("http://website1.com/page2".r),
         Reject("http://website1.com".r)

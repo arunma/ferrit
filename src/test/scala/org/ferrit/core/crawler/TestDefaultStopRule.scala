@@ -1,15 +1,16 @@
 package org.ferrit.core.crawler
 
+import org.allenai.common.testkit.UnitSpec
+
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
 
+class TestDefaultStopRule extends UnitSpec {
 
-class TestDefaultStopRule extends FlatSpec with ShouldMatchers {
-  
   val stopRule = new DefaultStopRule
 
   it should "not report failure until seeds are converted to URI fetches" in {
-    
+
     stopRule.isFailedCrawl(
           totalSeeds = 1,
           maxFailPercent = 0.1,
@@ -25,7 +26,7 @@ class TestDefaultStopRule extends FlatSpec with ShouldMatchers {
  }
 
  it should "not report failure until threshold reached" in {
-    
+
     stopRule.isFailedCrawl(
           totalSeeds = 1,
           maxFailPercent = 0.6,
@@ -41,7 +42,7 @@ class TestDefaultStopRule extends FlatSpec with ShouldMatchers {
  }
 
  it should "stop with failure if there are too many failed fetches" in {
-    
+
     stopRule.isFailedCrawl(
           totalSeeds = 1,
           maxFailPercent = 0.1,

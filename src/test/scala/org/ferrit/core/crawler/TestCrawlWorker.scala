@@ -1,5 +1,7 @@
 package org.ferrit.core.crawler
 
+import org.allenai.common.testkit.UnitSpec
+
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.routing.Listen
 import akka.testkit.{ImplicitSender, TestKit}
@@ -22,8 +24,8 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 
-class TestCrawlWorker extends FlatSpec with ShouldMatchers with BeforeAndAfterAll {
-  
+class TestCrawlWorker extends UnitSpec with BeforeAndAfterAll {
+
   implicit val system = ActorSystem("test")
 
   implicit val execContext = system.dispatcher
