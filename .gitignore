@@ -1,6 +1,7 @@
 *.class
 *.log
 bin/*.jar
+.vagrant/
 
 # sbt specific
 .cache/
