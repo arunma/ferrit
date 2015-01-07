@@ -14,10 +14,10 @@ You can run Ferrit in a test environment with locally cached websites available 
 
 1. Install the Allena AI base Vagrant box on your machine
 
-```shell
-$ aws s3 cp s3://ai2-environments/allenai-base.box allenai-base.box
-$ vagrant box add allenai/base allenai-base.box
-```
+  ```shell
+  $ aws s3 cp s3://ai2-environments/allenai-base.box allenai-base.box
+  $ vagrant box add allenai/base allenai-base.box
+  ```
 
 1. Run `vagrant up` from the root of your local forked repository
 
@@ -25,17 +25,17 @@ $ vagrant box add allenai/base allenai-base.box
 
 1. Start nginx (for some reason you have to start it each time the VM is rebooted - even though it is configured to boot on start).
 
-```shell
-$ sudo service nginx start
-```
+  ```shell
+  $ sudo service nginx start
+  ```
 
 1. Start Ferrit
 
-```shell
-$ cd /vagrant/
-$ sbt
-> reStart
-```
+  ```shell
+  $ cd /vagrant/
+  $ sbt
+  > reStart
+  ```
 
 You should not be able to open your web browser to http://localhost:8181/crawlers and see an empty JSON array `[]` as a response.
 
