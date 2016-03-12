@@ -59,10 +59,10 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
         .setString("crawler_name", c.crawlerName)
         .setString("job_id", c.jobId)
         .setString("node", c.node)
-        .setDate("partition_date", c.partitionDate)
-        .setDate("snapshot_date", c.snapshotDate)
-        .setDate("created_date", c.createdDate)
-        .setDate("finished_date", c.finishedDate)
+        .setTimestamp("partition_date", c.partitionDate)
+        .setTimestamp("snapshot_date", c.snapshotDate)
+        .setTimestamp("created_date", c.createdDate)
+        .setTimestamp("finished_date", c.finishedDate)
         .setLong("duration", c.duration)
         .setString("outcome", c.outcome)
         .setString("message", c.message)
@@ -93,7 +93,7 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
 
   override def find(partitionDate: DateTime): Seq[CrawlJob] =
     mapAll {
-      session.execute(stmtFindByDate.bind().setDate("partition_date", partitionDate))
+      session.execute(stmtFindByDate.bind().setTimestamp("partition_date", partitionDate))
     } { rowToEntity }
 
   private def rowToEntity(row: Row) = {
@@ -102,10 +102,10 @@ class CassandraCrawlJobDAO(ttl: CassandraColumnTTL)(implicit session: Session) e
       row.getString("crawler_name"),
       row.getString("job_id"),
       row.getString("node"),
-      row.getDate("partition_date"),
-      row.getDate("snapshot_date"),
-      row.getDate("created_date"),
-      row.getDate("finished_date"),
+      row.getTimestamp("partition_date"),
+      row.getTimestamp("snapshot_date"),
+      row.getTimestamp("created_date"),
+      row.getTimestamp("finished_date"),
       row.getLong("duration"),
       row.getString("outcome"),
       row.getString("message"),

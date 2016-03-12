@@ -1,7 +1,7 @@
-addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.1")
+addSbtPlugin("io.spray" % "sbt-revolver" % "0.8.0")
 
-addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.10.2")
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.14.2")
 
-addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.7.4")
+addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")
 
-addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "0.99.5.1")
+addSbtPlugin("org.scoverage" %% "sbt-scoverage" % "1.3.5")

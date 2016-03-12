@@ -1,0 +1,57 @@
+curl -XPOST "http://localhost:6464/crawlers" --header "Content-Type: application/json" -d '{
+    "id": "new",
+    "crawlerName": "Rerun",
+    "seeds": [
+        "http://rerun.me/"
+    ],
+    "uriFilter": {
+        "filterClass": "org.ferrit.core.filter.PriorityRejectUriFilter",
+        "rules": [
+            "accept: http://rerun.me/",
+            "reject: (?i)(.*)(\\.(jpe?g|png|gif|bmp))$"
+        ]
+    },
+    "tests": [
+        "should accept: http://www.w3.org/standards/webdesign/",
+        "should reject: http://www.w3.org/2012/10/wplogo_transparent.png"
+    ],
+    "userAgent": true,
+    "maxDepth": 2,
+    "maxFetches": 10,
+    "maxQueueSize": 1000,
+    "maxRequestFails": 0.2,
+    "crawlDelayMillis": 1000,
+    "crawlTimeoutMillis": 100000
+}'
+
+
+
+curl -XPOST "http://localhost:6464/crawlers" --header "Content-Type: application/json" -d '{
+    "id": "new",
+    "crawlerName": "Rerun",
+    "seeds": [
+        "http://rerun.me/"
+    ],
+    "uriFilter": {
+        "filterClass": "org.ferrit.core.filter.PriorityRejectUriFilter",
+        "rules": [
+            "accept: http://rerun.me/"
+        ]
+    },
+    "userAgent": "FerritCrawler",
+    "maxDepth": 2,
+    "maxFetches": 10,
+    "maxQueueSize": 1000,
+    "maxRequestFails": 0.2,
+    "crawlDelayMillis": 1000,
+    "crawlTimeoutMillis": 100000
+}'
+
+
+
+curl -XPOST "localhost:6464/job-processes" --header "Content-Type: application/json" -d '{
+    "id": "3c1d958a-d143-46bc-9740-9b586cec8d0c"
+}'
+
+
+curl -XGET "localhost:6464/crawlers/3c1d958a-d143-46bc-9740-9b586cec8d0c/jobs"

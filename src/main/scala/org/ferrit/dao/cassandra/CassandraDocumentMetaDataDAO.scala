@@ -30,7 +30,7 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
         .setString("content_type", docMeta.contentType)
         .setInt("content_length", docMeta.contentLength)
         .setInt("depth", docMeta.depth)
-        .setDate("fetched", docMeta.fetched)
+        .setTimestamp("fetched", docMeta.fetched)
         .setString("response_status", docMeta.responseStatus)
     )
   }
@@ -60,7 +60,7 @@ class CassandraDocumentMetaDataDAO(ttl: CassandraColumnTTL)(implicit session: Se
     row.getString("content_type"),
     row.getInt("content_length"),
     row.getInt("depth"),
-    row.getDate("fetched"),
+    row.getTimestamp("fetched"),
     row.getString("response_status")
   )
 }

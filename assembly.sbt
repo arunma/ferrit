@@ -1,7 +1,3 @@
-import AssemblyKeys._
-
-assemblySettings
-
 mainClass in assembly := Some("org.ferrit.server.Ferrit")
 
 jarName in assembly := "ferrit-server.jar"

@@ -34,7 +34,7 @@ class CassandraFetchLogEntryDAO(ttl: CassandraColumnTTL)(implicit session: Sessi
       stmtInsert.bind()
           .setString("crawler_id", fle.crawlerId)
           .setString("job_id", fle.jobId)
-          .setDate("log_time", fle.logTime)
+          .setTimestamp("log_time", fle.logTime)
           .setString("uri", fle.uri)
           .setInt("uri_depth", fle.uriDepth)
           .setInt("status_code", fle.statusCode)
@@ -61,7 +61,7 @@ class CassandraFetchLogEntryDAO(ttl: CassandraColumnTTL)(implicit session: Sessi
   private def rowToEntity(row: Row) = FetchLogEntry(
     row.getString("crawler_id"),
     row.getString("job_id"),
-    row.getDate("log_time"),
+    row.getTimestamp("log_time"),
     row.getString("uri"),
     row.getInt("uri_depth"),
     row.getInt("status_code"),
